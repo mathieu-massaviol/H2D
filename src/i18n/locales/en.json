@@ -1,0 +1,35 @@
+{
+  "credentials": {
+    "title": "API Credentials",
+    "environment": "Environment",
+    "prod": "Production",
+    "test": "Test",
+    "hal": {
+      "title": "HAL",
+      "login": "Login",
+      "password": "Password"
+    },
+    "datacite": {
+      "title": "DataCite",
+      "repositoryId": "Repository ID",
+      "password": "Password"
+    },
+    "actions": {
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "status": {
+      "configured": "Credentials saved",
+      "notConfigured": "No credentials saved"
+    },
+    "messages": {
+      "saveSuccess": "Credentials saved successfully",
+      "saveError": "Error saving credentials: {error}",
+      "deleteSuccess": "Credentials deleted",
+      "deleteError": "Error deleting credentials: {error}",
+      "deleteConfirm": "Delete {api} credentials?"
+    }
+  }
+}

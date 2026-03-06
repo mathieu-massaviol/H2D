@@ -1,0 +1,35 @@
+{
+  "credentials": {
+    "title": "Identifiants API",
+    "environment": "Environnement",
+    "prod": "Production",
+    "test": "Test",
+    "hal": {
+      "title": "HAL",
+      "login": "Identifiant",
+      "password": "Mot de passe"
+    },
+    "datacite": {
+      "title": "DataCite",
+      "repositoryId": "Repository ID",
+      "password": "Mot de passe"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "status": {
+      "configured": "Identifiants enregistrés",
+      "notConfigured": "Aucun identifiant enregistré"
+    },
+    "messages": {
+      "saveSuccess": "Identifiants enregistrés avec succès",
+      "saveError": "Erreur lors de l'enregistrement : {error}",
+      "deleteSuccess": "Identifiants supprimés",
+      "deleteError": "Erreur lors de la suppression : {error}",
+      "deleteConfirm": "Supprimer les identifiants {api} ?"
+    }
+  }
+}
