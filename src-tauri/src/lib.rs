@@ -1,7 +1,51 @@
+mod credentials;
+
+use credentials::CredentialStore;
+use std::sync::{Arc, Mutex};
+use tauri::Manager;
+use tauri_plugin_stronghold::stronghold::Stronghold;
+
+const CLIENT_NAME: &[u8] = b"hal2datacite";
+
+fn derive_vault_key() -> Vec<u8> {
+    use sha2::{Digest, Sha256};
+    let machine_id =
+        machine_uid::get().unwrap_or_else(|_| "hal2datacite-default".to_string());
+    let mut hasher = Sha256::new();
+    hasher.update(machine_id.as_bytes());
+    hasher.update(b"hal2datacite_v1");
+    hasher.finalize().to_vec()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_stronghold::Builder::new(|_| derive_vault_key()).build())
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let vault_path = app
+                .path()
+                .app_data_dir()
+                .expect("could not resolve app data dir")
+                .join("credentials.hold");
+            let vault =
+                Stronghold::new(&vault_path, derive_vault_key()).expect("failed to initialize vault");
+            if vault.load_client(CLIENT_NAME).is_err() {
+                vault
+                    .create_client(CLIENT_NAME)
+                    .expect("failed to create stronghold client");
+                vault.save().expect("failed to save vault");
+            }
+            app.manage(CredentialStore(Arc::new(Mutex::new(vault))));
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            credentials::save_hal_credentials,
+            credentials::save_datacite_credentials,
+            credentials::get_hal_credentials,
+            credentials::get_datacite_credentials,
+            credentials::delete_credentials,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

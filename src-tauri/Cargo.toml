@@ -22,4 +22,38 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-opener = "2"
+tauri-plugin-stronghold = "2"
+sha2 = "0.10"
+machine-uid = "0.5"
 
+[dev-dependencies]
+tempfile = "3"
+
+# Optimize crypto crates in dev builds.
+# The Stronghold vault uses age-encryption with scrypt (N=2^19), which is
+# unusably slow without compiler optimizations, causing Tauri to hang on
+# startup. This targets only the heavy crates to keep incremental build
+# times fast for application code.
+[profile.dev.package.scrypt]
+opt-level = 3
+
+[profile.dev.package.salsa20]
+opt-level = 3
+
+[profile.dev.package.sha2]
+opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3
+
+[profile.dev.package.iota-crypto]
+opt-level = 3
+
+[profile.dev.package.iota_stronghold]
+opt-level = 3
+
+[profile.dev.package.stronghold-runtime]
+opt-level = 3
+
+[profile.dev.package.stronghold_engine]
+opt-level = 3
