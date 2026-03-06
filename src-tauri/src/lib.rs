@@ -19,8 +19,8 @@ fn derive_vault_key() -> Vec<u8> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let key = derive_vault_key();
     tauri::Builder::default()
-        .plugin(tauri_plugin_stronghold::Builder::new(|_| derive_vault_key()).build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let vault_path = app
@@ -29,7 +29,7 @@ pub fn run() {
                 .expect("could not resolve app data dir")
                 .join("credentials.hold");
             let vault =
-                Stronghold::new(&vault_path, derive_vault_key()).expect("failed to initialize vault");
+                Stronghold::new(&vault_path, key).expect("failed to initialize vault");
             if vault.load_client(CLIENT_NAME).is_err() {
                 vault
                     .create_client(CLIENT_NAME)

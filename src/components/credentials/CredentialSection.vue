@@ -55,13 +55,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import CredentialForm from './CredentialForm.vue'
 
-defineProps<{
+const props = defineProps<{
   title: string
   configuredText: string
   notConfiguredText: string
@@ -83,6 +83,10 @@ const emit = defineEmits<{
 
 const editing = ref(false)
 const formRef = ref<InstanceType<typeof CredentialForm>>()
+
+watch(() => props.displayValue, () => {
+  editing.value = false
+})
 
 defineExpose({
   resetEditing: () => {

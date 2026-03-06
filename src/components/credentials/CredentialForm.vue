@@ -27,7 +27,7 @@
         outlined
         @click="emit('cancel')"
       />
-      <Button type="submit" :label="saveLabel" :loading="loading" icon="pi pi-save" />
+      <Button type="submit" :label="saveLabel" :loading="loading" :disabled="!identifier || !password" icon="pi pi-save" />
     </div>
   </form>
 </template>
@@ -42,7 +42,7 @@ const props = defineProps<{
   identifierLabel: string
   passwordLabel: string
   saveLabel: string
-  cancelLabel?: string
+  cancelLabel: string
   showCancel?: boolean
   loading?: boolean
   initialIdentifier?: string

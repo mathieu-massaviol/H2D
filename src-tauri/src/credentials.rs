@@ -11,6 +11,13 @@ pub(crate) fn store_key(api: &str, env: &str, field: &str) -> String {
     format!("{api}_{env}_{field}")
 }
 
+fn validate_env(env: &str) -> Result<(), String> {
+    match env {
+        "prod" | "test" => Ok(()),
+        other => Err(format!("unknown env: {other}")),
+    }
+}
+
 /// Non-sensitive credential info returned to the frontend.
 #[derive(serde::Serialize, Debug, PartialEq)]
 pub struct HalCredentialInfo {
@@ -29,6 +36,7 @@ pub(crate) fn save_hal_creds_inner(
     login: String,
     password: String,
 ) -> Result<(), String> {
+    validate_env(env)?;
     let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
     let s = client.store();
     s.insert(
@@ -52,6 +60,7 @@ pub(crate) fn save_datacite_creds_inner(
     repository_id: String,
     password: String,
 ) -> Result<(), String> {
+    validate_env(env)?;
     let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
     let s = client.store();
     s.insert(
@@ -73,6 +82,7 @@ pub(crate) fn get_hal_creds_inner(
     vault: &Stronghold,
     env: &str,
 ) -> Result<Option<HalCredentialInfo>, String> {
+    validate_env(env)?;
     let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
     let s = client.store();
     let login = s
@@ -86,6 +96,7 @@ pub(crate) fn get_datacite_creds_inner(
     vault: &Stronghold,
     env: &str,
 ) -> Result<Option<DataciteCredentialInfo>, String> {
+    validate_env(env)?;
     let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
     let s = client.store();
     let repository_id = s
@@ -100,6 +111,7 @@ pub(crate) fn delete_creds_inner(
     api: &str,
     env: &str,
 ) -> Result<(), String> {
+    validate_env(env)?;
     let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
     let s = client.store();
     let fields: &[&str] = match api {
@@ -308,6 +320,36 @@ mod tests {
         let (_dir, vault) = setup_vault();
         let err = delete_creds_inner(&vault, "unknown", "prod").unwrap_err();
         assert!(err.contains("unknown api: unknown"));
+    }
+
+    #[test]
+    fn test_unknown_env_returns_error() {
+        let (_dir, vault) = setup_vault();
+        let err = save_hal_creds_inner(&vault, "staging", "alice".into(), "pw".into()).unwrap_err();
+        assert!(err.contains("unknown env: staging"));
+    }
+
+    #[test]
+    fn test_persistence_across_restarts() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("test.hold");
+        let key = vec![0u8; 32];
+
+        // Session 1 : sauvegarder
+        {
+            let vault = Stronghold::new(&path, key.clone()).unwrap();
+            vault.create_client(CLIENT_NAME).unwrap();
+            vault.save().unwrap();
+            save_hal_creds_inner(&vault, "prod", "alice".into(), "secret".into()).unwrap();
+        }
+
+        // Session 2 : charger depuis le fichier
+        {
+            let vault = Stronghold::new(&path, key.clone()).unwrap();
+            vault.load_client(CLIENT_NAME).unwrap();
+            let result = get_hal_creds_inner(&vault, "prod").unwrap();
+            assert_eq!(result, Some(HalCredentialInfo { login: "alice".into() }));
+        }
     }
 
     #[test]

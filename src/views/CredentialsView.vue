@@ -90,13 +90,13 @@ const dataciteSectionProps = computed(() => ({
   passwordLabel: t('credentials.datacite.password'),
 }))
 
-async function loadHal() {
-  halInfo.value = (await invoke<{ login: string } | null>('get_hal_credentials', { env: env.value })) ?? null
-}
-
-async function loadDatacite() {
-  dataciteInfo.value =
-    (await invoke<{ repository_id: string } | null>('get_datacite_credentials', { env: env.value })) ?? null
+async function load(api: 'hal' | 'datacite') {
+  if (api === 'hal') {
+    halInfo.value = (await invoke<{ login: string } | null>('get_hal_credentials', { env: env.value })) ?? null
+  } else {
+    dataciteInfo.value =
+      (await invoke<{ repository_id: string } | null>('get_datacite_credentials', { env: env.value })) ?? null
+  }
 }
 
 async function saveHal(identifier: string, password: string) {
@@ -105,7 +105,7 @@ async function saveHal(identifier: string, password: string) {
   try {
     await invoke('save_hal_credentials', { env: env.value, login: identifier, password })
     toast.add({ severity: 'success', summary: t('credentials.messages.saveSuccess'), life: 3000 })
-    await loadHal()
+    await load('hal')
     halSectionRef.value?.resetEditing()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('credentials.messages.saveError', { error: String(err) }), life: 5000 })
@@ -120,7 +120,7 @@ async function saveDatacite(identifier: string, password: string) {
   try {
     await invoke('save_datacite_credentials', { env: env.value, repositoryId: identifier, password })
     toast.add({ severity: 'success', summary: t('credentials.messages.saveSuccess'), life: 3000 })
-    await loadDatacite()
+    await load('datacite')
     dataciteSectionRef.value?.resetEditing()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('credentials.messages.saveError', { error: String(err) }), life: 5000 })
@@ -131,7 +131,6 @@ async function saveDatacite(identifier: string, password: string) {
 
 function confirmDelete(api: 'hal' | 'datacite') {
   const deletingRef = api === 'hal' ? halDeleting : dataciteDeleting
-  const loadFn = api === 'hal' ? loadHal : loadDatacite
   confirm.require({
     message: t('credentials.messages.deleteConfirm', { api: api === 'hal' ? 'HAL' : 'DataCite' }),
     header: t('credentials.actions.delete'),
@@ -143,7 +142,7 @@ function confirmDelete(api: 'hal' | 'datacite') {
       try {
         await invoke('delete_credentials', { api, env: env.value })
         toast.add({ severity: 'success', summary: t('credentials.messages.deleteSuccess'), life: 3000 })
-        await loadFn()
+        await load(api)
       } catch (err) {
         toast.add({
           severity: 'error',
@@ -157,5 +156,5 @@ function confirmDelete(api: 'hal' | 'datacite') {
   })
 }
 
-watch(env, () => Promise.all([loadHal(), loadDatacite()]), { immediate: true })
+watch(env, () => Promise.all([load('hal'), load('datacite')]), { immediate: true })
 </script>
