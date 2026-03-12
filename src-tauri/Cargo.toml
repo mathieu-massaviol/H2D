@@ -25,9 +25,13 @@ tauri-plugin-opener = "2"
 tauri-plugin-stronghold = "2"
 sha2 = "0.10"
 machine-uid = "0.5"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde_with = "3"
+quick-xml = "0.37"
 
 [dev-dependencies]
 tempfile = "3"
+tokio = { version = "1", features = ["rt", "macros"] }
 
 # Optimize crypto crates in dev builds.
 # The Stronghold vault uses age-encryption with scrypt (N=2^19), which is

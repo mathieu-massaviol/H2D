@@ -11,7 +11,7 @@ pub(crate) fn store_key(api: &str, env: &str, field: &str) -> String {
     format!("{api}_{env}_{field}")
 }
 
-fn validate_env(env: &str) -> Result<(), String> {
+pub(crate) fn validate_env(env: &str) -> Result<(), String> {
     match env {
         "prod" | "test" => Ok(()),
         other => Err(format!("unknown env: {other}")),
@@ -28,6 +28,22 @@ pub struct HalCredentialInfo {
 #[derive(serde::Serialize, Debug, PartialEq)]
 pub struct DataciteCredentialInfo {
     pub(crate) repository_id: String,
+}
+
+/// Reads a single secret from the vault. Returns `Err` if the key is absent or not valid UTF-8.
+pub(crate) fn get_vault_secret(
+    vault: &Stronghold,
+    api: &str,
+    env: &str,
+    field: &str,
+) -> Result<String, String> {
+    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
+    client
+        .store()
+        .get(store_key(api, env, field).as_ref())
+        .map_err(|e| e.to_string())?
+        .and_then(|b| String::from_utf8(b).ok())
+        .ok_or_else(|| format!("{api} {field} not configured"))
 }
 
 pub(crate) fn save_hal_creds_inner(
