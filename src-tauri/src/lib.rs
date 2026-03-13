@@ -1,6 +1,7 @@
 mod credentials;
 mod datacite_service;
 mod hal_service;
+mod utils;
 
 use credentials::CredentialStore;
 use std::sync::{Arc, Mutex};
@@ -55,6 +56,7 @@ pub fn run() {
             datacite_service::publish_doi,
             datacite_service::delete_doi,
             datacite_service::get_datacite_dois,
+            utils::save_csv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

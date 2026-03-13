@@ -54,13 +54,12 @@
           </template>
         </Card>
 
-        <!-- Batch DOI (coming soon) -->
-        <Card class="opacity-50 pointer-events-none">
+        <!-- Batch DOI creation -->
+        <Card>
           <template #title>
             <span class="flex items-center gap-2">
-              <i class="pi pi-list text-gray-400" />
+              <i class="pi pi-list text-primary" />
               {{ t('home.batchDoi.title') }}
-              <Tag :value="t('home.batchDoi.comingSoon')" severity="secondary" />
             </span>
           </template>
           <template #content>
@@ -72,7 +71,7 @@
                 :label="t('home.batchDoi.title')"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                disabled
+                @click="router.push('/batch-doi')"
               />
             </div>
           </template>

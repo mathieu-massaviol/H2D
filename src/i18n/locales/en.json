@@ -25,8 +25,7 @@
     },
     "batchDoi": {
       "title": "Batch DOI creation",
-      "description": "Create DataCite DOIs for multiple HAL documents in a single operation.",
-      "comingSoon": "Coming soon"
+      "description": "Create DataCite DOIs for multiple HAL documents in a single operation."
     }
   },
   "doiList": {
@@ -144,6 +143,88 @@
       "errors": {
         "publishFailed": "Error publishing DOI: {error}",
         "halUpdateFailed": "Error updating HAL record: {error}"
+      }
+    }
+  },
+  "batchDoi": {
+    "title": "Batch DOI creation",
+    "steps": {
+      "config": "Configuration",
+      "input": "HAL identifiers",
+      "overview": "Overview",
+      "processing": "Processing",
+      "results": "Results"
+    },
+    "step2": {
+      "title": "Enter HAL identifiers",
+      "instructions": "Enter one HAL identifier or URL per line. Duplicates and blank lines are ignored. Lines starting with # are treated as comments.",
+      "label": "HAL identifiers",
+      "placeholder": "hal-03720513\nhttps://hal.science/hal-04000000\nhal-01234567v2",
+      "lineCount": "{count} identifier(s)",
+      "loadMetadata": "Load metadata",
+      "errors": {
+        "noIds": "Please enter at least one valid HAL identifier."
+      }
+    },
+    "step3": {
+      "title": "Overview",
+      "fetching": "Fetching metadata...",
+      "noReadyDocs": "No documents are eligible for DOI creation. Please go back and check your identifiers.",
+      "startProcessing": "Start processing",
+      "columns": {
+        "halId": "HAL ID",
+        "title": "Title",
+        "status": "Status"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "loading": "Loading",
+        "ready": "Ready",
+        "has_doi": "Has DOI",
+        "not_found": "Not found",
+        "fetch_error": "Error"
+      }
+    },
+    "step4": {
+      "title": "Processing",
+      "progress": "{processed} / {total} processed",
+      "cancelWarning": "Cancellation requested. The current document will finish before stopping.",
+      "skipped": "skipped",
+      "viewResults": "View results",
+      "statuses": {
+        "success": "Success",
+        "error": "Error",
+        "has_doi": "Skipped (has DOI)",
+        "not_found": "Not found",
+        "fetch_error": "Fetch error",
+        "pending": "Not processed",
+        "ready": "Pending",
+        "processing": "Processing"
+      }
+    },
+    "step5": {
+      "title": "Results",
+      "exportCsv": "Export CSV",
+      "exportSuccess": "CSV file saved successfully",
+      "exportError": "Error saving CSV: {error}",
+      "halSyncFailed": "HAL sync failed",
+      "columns": {
+        "halId": "HAL ID",
+        "doi": "DOI",
+        "status": "Status",
+        "halSynced": "HAL synced",
+        "error": "Error"
+      },
+      "statuses": {
+        "success": "Success",
+        "error": "Error",
+        "has_doi": "Skipped (has DOI)",
+        "not_found": "Not found",
+        "fetch_error": "Fetch error",
+        "pending": "Not processed",
+        "ready": "Not processed",
+        "processing": "Not processed",
+        "loading": "Not processed"
       }
     }
   },

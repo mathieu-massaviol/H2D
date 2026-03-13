@@ -25,8 +25,7 @@
     },
     "batchDoi": {
       "title": "Créer des DOIs en lot",
-      "description": "Créez des DOIs DataCite pour plusieurs documents HAL en une seule opération.",
-      "comingSoon": "Bientôt disponible"
+      "description": "Créez des DOIs DataCite pour plusieurs documents HAL en une seule opération."
     }
   },
   "doiList": {
@@ -144,6 +143,88 @@
       "errors": {
         "publishFailed": "Erreur lors de la publication du DOI : {error}",
         "halUpdateFailed": "Erreur lors de la mise à jour de la fiche HAL : {error}"
+      }
+    }
+  },
+  "batchDoi": {
+    "title": "Créer des DOIs en lot",
+    "steps": {
+      "config": "Configuration",
+      "input": "Identifiants HAL",
+      "overview": "Vue d'ensemble",
+      "processing": "Traitement",
+      "results": "Résultats"
+    },
+    "step2": {
+      "title": "Saisir les identifiants HAL",
+      "instructions": "Saisissez un identifiant ou une URL HAL par ligne. Les doublons et les lignes vides sont ignorés. Les lignes commençant par # sont traitées comme des commentaires.",
+      "label": "Identifiants HAL",
+      "placeholder": "hal-03720513\nhttps://hal.science/hal-04000000\nhal-01234567v2",
+      "lineCount": "{count} identifiant(s)",
+      "loadMetadata": "Charger les métadonnées",
+      "errors": {
+        "noIds": "Veuillez saisir au moins un identifiant HAL valide."
+      }
+    },
+    "step3": {
+      "title": "Vue d'ensemble",
+      "fetching": "Récupération des métadonnées...",
+      "noReadyDocs": "Aucun document n'est éligible à la création de DOI. Veuillez revenir en arrière et vérifier vos identifiants.",
+      "startProcessing": "Lancer le traitement",
+      "columns": {
+        "halId": "Identifiant HAL",
+        "title": "Titre",
+        "status": "Statut"
+      },
+      "statuses": {
+        "pending": "En attente",
+        "loading": "Chargement",
+        "ready": "Prêt",
+        "has_doi": "DOI existant",
+        "not_found": "Introuvable",
+        "fetch_error": "Erreur"
+      }
+    },
+    "step4": {
+      "title": "Traitement en cours",
+      "progress": "{processed} / {total} traité(s)",
+      "cancelWarning": "Annulation demandée. Le document en cours sera finalisé avant l'arrêt.",
+      "skipped": "ignoré(s)",
+      "viewResults": "Voir les résultats",
+      "statuses": {
+        "success": "Succès",
+        "error": "Erreur",
+        "has_doi": "Ignoré (DOI existant)",
+        "not_found": "Introuvable",
+        "fetch_error": "Erreur de récupération",
+        "pending": "Non traité",
+        "ready": "En attente",
+        "processing": "En cours"
+      }
+    },
+    "step5": {
+      "title": "Résultats",
+      "exportCsv": "Exporter en CSV",
+      "exportSuccess": "Fichier CSV enregistré avec succès",
+      "exportError": "Erreur lors de l'enregistrement du CSV : {error}",
+      "halSyncFailed": "sync HAL échouée",
+      "columns": {
+        "halId": "Identifiant HAL",
+        "doi": "DOI",
+        "status": "Statut",
+        "halSynced": "Sync HAL",
+        "error": "Erreur"
+      },
+      "statuses": {
+        "success": "Succès",
+        "error": "Erreur",
+        "has_doi": "Ignoré (DOI existant)",
+        "not_found": "Introuvable",
+        "fetch_error": "Erreur de récupération",
+        "pending": "Non traité",
+        "ready": "Non traité",
+        "processing": "Non traité",
+        "loading": "Non traité"
       }
     }
   },
