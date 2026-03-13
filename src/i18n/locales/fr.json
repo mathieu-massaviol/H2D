@@ -35,7 +35,7 @@
     "environment": "Environnement",
     "prod": "Production",
     "test": "Test",
-    "fetch": "Récupérer les DOIs",
+    "fetch": "Rafraîchir",
     "total": "{count} DOI(s) trouvé(s)",
     "empty": "Aucun DOI trouvé pour ce compte.",
     "columns": {
@@ -44,7 +44,15 @@
       "title": "Titre",
       "state": "État",
       "year": "Année",
-      "type": "Type de ressource"
+      "type": "Type de ressource",
+      "halSync": "Sync HAL"
+    },
+    "halSync": {
+      "synced": "Synchronisé",
+      "notSynced": "Non synchronisé",
+      "addToHal": "Ajouter à HAL",
+      "addSuccess": "DOI ajouté à HAL avec succès",
+      "addFailed": "Erreur lors de l'ajout du DOI à HAL : {error}"
     },
     "states": {
       "findable": "Trouvable",
@@ -73,6 +81,7 @@
       "prefixPlaceholder": "Sélectionner un préfixe",
       "loadPrefixes": "Chargement des préfixes...",
       "noPrefixes": "Aucun préfixe disponible",
+      "credentialsMissing": "Les identifiants DataCite ne sont pas configurés.",
       "fetchMetadata": "Récupérer les métadonnées",
       "errors": {
         "halIdRequired": "Veuillez saisir un identifiant ou une URL HAL",
@@ -84,6 +93,7 @@
     "step2": {
       "title": "Vérification des métadonnées HAL",
       "existingDoiWarning": "Ce document possède déjà un DOI : {doi}",
+      "existingDoiError": "Ce document possède déjà un DOI : {doi}. Il n'est pas possible de créer un nouveau DOI.",
       "fields": {
         "title": "Titre(s)",
         "authors": "Auteur(s)",
@@ -117,6 +127,9 @@
         "fundingReferences": "Financement(s)"
       },
       "publishButton": "Valider et publier",
+      "cancelConfirmTitle": "Supprimer le DOI brouillon",
+      "cancelConfirm": "L'annulation supprimera définitivement le DOI brouillon {doi}. Êtes-vous sûr ?",
+      "doiCopied": "DOI copié dans le presse-papiers",
       "errors": {
         "createFailed": "Erreur lors de la création du DOI : {error}"
       }
@@ -127,6 +140,7 @@
       "doi": "DOI",
       "viewOnDatacite": "Voir sur DataCite",
       "viewOnHal": "Voir sur HAL",
+      "halUpdateFailedDetailed": "Le DOI a été publié sur DataCite mais n'a pas pu être ajouté à la fiche HAL. Vous pouvez réessayer depuis la liste des DOIs.",
       "errors": {
         "publishFailed": "Erreur lors de la publication du DOI : {error}",
         "halUpdateFailed": "Erreur lors de la mise à jour de la fiche HAL : {error}"

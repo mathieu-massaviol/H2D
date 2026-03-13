@@ -2,7 +2,9 @@
   <div class="flex flex-col gap-4 max-w-2xl px-8 pb-4">
     <!-- Success state -->
     <template v-if="done">
-      <Message v-if="halError" severity="warn" :closable="false">{{ halError }}</Message>
+      <Message v-if="halError" severity="warn" :closable="false">
+        {{ t('createDoi.step4.halUpdateFailedDetailed') }}
+      </Message>
       <div class="flex flex-col items-center gap-4 py-8 text-center">
         <div class="flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
           <i class="pi pi-check text-green-600 text-3xl" />
@@ -49,7 +51,6 @@
 
       <!-- Publish error -->
       <Message v-if="publishError" severity="error" :closable="false">{{ publishError }}</Message>
-      <Message v-if="halError" severity="warn" :closable="false">{{ halError }}</Message>
 
       <!-- Draft DOI panel -->
       <div class="flex flex-col gap-1">
@@ -83,19 +84,19 @@
             </div>
           </MetaRow>
 
-          <DataRow
+          <MetaRow
             :label="t('createDoi.step3.fields.type')"
-            :value="`${dataciteMetadata.types.resource_type_general}${dataciteMetadata.types.resource_type ? ' / ' + dataciteMetadata.types.resource_type : ''}`"
+            :value="`${dataciteMetadata.types.resourceTypeGeneral}${dataciteMetadata.types.resourceType ? ' / ' + dataciteMetadata.types.resourceType : ''}`"
           />
 
-          <DataRow
+          <MetaRow
             :label="t('createDoi.step3.fields.publicationYear')"
-            :value="String(dataciteMetadata.publication_year)"
+            :value="String(dataciteMetadata.publicationYear)"
           />
 
           <MetaRow :label="t('createDoi.step3.fields.publisher')" :value="dataciteMetadata.publisher.name" />
 
-          <DataRow
+          <MetaRow
             v-if="dataciteMetadata.language"
             :label="t('createDoi.step3.fields.language')"
             :value="dataciteMetadata.language"
@@ -111,22 +112,22 @@
             <p class="text-sm text-gray-700 line-clamp-3">{{ dataciteMetadata.descriptions[0].description }}</p>
           </MetaRow>
 
-          <MetaRow v-if="dataciteMetadata.rights_list?.length" :label="t('createDoi.step3.fields.rights')">
+          <MetaRow v-if="dataciteMetadata.rightsList?.length" :label="t('createDoi.step3.fields.rights')">
             <a
-              v-if="dataciteMetadata.rights_list[0].rights_uri"
-              :href="dataciteMetadata.rights_list[0].rights_uri"
+              v-if="dataciteMetadata.rightsList[0].rightsUri"
+              :href="dataciteMetadata.rightsList[0].rightsUri"
               target="_blank"
               class="text-primary text-sm hover:underline"
             >
-              {{ dataciteMetadata.rights_list[0].rights_uri }}
+              {{ dataciteMetadata.rightsList[0].rightsUri }}
             </a>
-            <span v-else class="text-sm text-gray-700">{{ dataciteMetadata.rights_list[0].rights }}</span>
+            <span v-else class="text-sm text-gray-700">{{ dataciteMetadata.rightsList[0].rights }}</span>
           </MetaRow>
 
-          <MetaRow v-if="dataciteMetadata.funding_references?.length" :label="t('createDoi.step3.fields.fundingReferences')">
+          <MetaRow v-if="dataciteMetadata.fundingReferences?.length" :label="t('createDoi.step3.fields.fundingReferences')">
             <div class="flex flex-col gap-1">
-              <div v-for="(f, i) in dataciteMetadata.funding_references" :key="i" class="text-sm text-gray-700">
-                {{ f.funder_name }}<span v-if="f.award_number"> — {{ f.award_number }}</span>
+              <div v-for="(f, i) in dataciteMetadata.fundingReferences" :key="i" class="text-sm text-gray-700">
+                {{ f.funderName }}<span v-if="f.awardNumber"> — {{ f.awardNumber }}</span>
               </div>
             </div>
           </MetaRow>
@@ -135,14 +136,24 @@
 
       <!-- Actions -->
       <div class="flex justify-between pt-2">
-        <Button
-          :label="t('common.cancel')"
-          severity="secondary"
-          outlined
-          :loading="deleting"
-          :disabled="publishing"
-          @click="cancelAndDelete"
-        />
+        <div class="flex gap-2">
+          <Button
+            :label="t('common.back')"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            outlined
+            :disabled="publishing || deleting"
+            @click="goBack"
+          />
+          <Button
+            :label="t('common.cancel')"
+            severity="secondary"
+            outlined
+            :loading="deleting"
+            :disabled="publishing"
+            @click="cancelAndDelete"
+          />
+        </div>
         <Button
           :label="t('createDoi.step3.publishButton')"
           icon="pi pi-send"
@@ -161,23 +172,25 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 import MetaRow from '../../shared/MetaRow.vue'
 
 export interface DataciteMetadata {
-  creators: { name: string; name_type: string; given_name?: string; family_name?: string }[]
-  titles: { title: string; lang?: string; title_type?: string }[]
+  creators: { name: string; nameType: string; givenName?: string; familyName?: string }[]
+  titles: { title: string; lang?: string; titleType?: string }[]
   publisher: { name: string }
-  publication_year: number
+  publicationYear: number
   subjects?: { subject: string; lang?: string }[]
   language?: string
-  types: { resource_type_general: string; resource_type?: string }
-  alternate_identifiers?: { alternate_identifier: string; alternate_identifier_type: string }[]
-  funding_references?: { funder_name: string; award_number?: string; award_title?: string }[]
-  descriptions?: { description: string; description_type: string; lang?: string }[]
-  rights_list?: { rights?: string; rights_uri?: string }[]
+  types: { resourceTypeGeneral: string; resourceType?: string }
+  alternateIdentifiers?: { alternateIdentifier: string; alternateIdentifierType: string }[]
+  fundingReferences?: { funderName: string; awardNumber?: string; awardTitle?: string }[]
+  descriptions?: { description: string; descriptionType: string; lang?: string }[]
+  rightsList?: { rights?: string; rightsUri?: string }[]
   url: string
 }
 
@@ -192,9 +205,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   home: []
   cancel: []
+  back: []
 }>()
 
 const { t } = useI18n()
+const confirm = useConfirm()
+const toast = useToast()
 const publishing = ref(false)
 const deleting = ref(false)
 const done = ref(false)
@@ -223,20 +239,40 @@ async function publish() {
   done.value = true
 }
 
-async function cancelAndDelete() {
-  deleting.value = true
-  try {
-    await invoke('delete_doi', { doi: props.draftDoi, env: props.env })
-  } catch {
-    // Best-effort
-  } finally {
-    deleting.value = false
-  }
-  emit('cancel')
+function cancelAndDelete() {
+  confirm.require({
+    message: t('createDoi.step3.cancelConfirm', { doi: props.draftDoi }),
+    header: t('createDoi.step3.cancelConfirmTitle'),
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: { label: t('common.back'), severity: 'secondary', outlined: true },
+    acceptProps: { label: t('common.cancel'), severity: 'danger' },
+    accept: async () => {
+      deleting.value = true
+      try {
+        await invoke('delete_doi', { doi: props.draftDoi, env: props.env })
+      } catch {
+        // Best-effort
+      } finally {
+        deleting.value = false
+      }
+      emit('cancel')
+    },
+  })
+}
+
+function goBack() {
+  // Navigate immediately; delete the draft DOI in the background (best-effort)
+  invoke('delete_doi', { doi: props.draftDoi, env: props.env }).catch(() => {})
+  emit('back')
 }
 
 async function copyDoi() {
   await navigator.clipboard.writeText(props.draftDoi)
+  toast.add({
+    severity: 'success',
+    summary: t('createDoi.step3.doiCopied'),
+    life: 3000,
+  })
 }
 
 function openDatacite() {

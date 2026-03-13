@@ -31,8 +31,9 @@
           </StepPanel>
 
           <StepPanel value="2" class="pt-6">
+            <!-- v-show preserves internal state (metadata + confirm view) when returning from step 3 -->
             <SelectDocumentStep
-              v-if="activeStep === '2'"
+              v-show="activeStep === '2'"
               :env="env"
               :prefix="selectedPrefix"
               :hal-id="halId"
@@ -51,6 +52,7 @@
               :env="env"
               @home="router.push('/home')"
               @cancel="router.push('/home')"
+              @back="onStep3Back"
             />
           </StepPanel>
         </StepPanels>
@@ -98,5 +100,11 @@ function onStep2Next(id: string, metadata: HalMetadata, doi: string, dcMeta: Dat
   draftDoi.value = doi
   dataciteMetadata.value = dcMeta
   activeStep.value = '3'
+}
+
+function onStep3Back() {
+  draftDoi.value = ''
+  dataciteMetadata.value = null
+  activeStep.value = '2'
 }
 </script>

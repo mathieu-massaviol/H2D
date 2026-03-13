@@ -87,6 +87,33 @@
                 <span class="text-sm text-gray-600">{{ data.resourceTypeGeneral ?? '—' }}</span>
               </template>
             </Column>
+            <Column :header="t('doiList.columns.halSync')" style="width: 9rem">
+              <template #body="{ data }">
+                <div class="flex items-center gap-2" @click.stop>
+                  <!-- Only findable DOIs with a HAL ID are checked -->
+                  <template v-if="data.halId && data.state === 'findable'">
+                    <i v-if="halSyncMap[data.doi] === 'loading'" class="pi pi-spin pi-spinner text-gray-400 text-base" />
+                    <template v-else-if="halSyncMap[data.doi] === true">
+                      <i class="pi pi-check-circle text-green-600 text-base" />
+                      <span class="text-xs text-green-700">{{ t('doiList.halSync.synced') }}</span>
+                    </template>
+                    <template v-else-if="halSyncMap[data.doi] === false">
+                      <Button
+                        :label="t('doiList.halSync.addToHal')"
+                        icon="pi pi-upload"
+                        size="small"
+                        severity="warn"
+                        outlined
+                        :loading="syncingDoi === data.doi"
+                        :disabled="!!syncingDoi && syncingDoi !== data.doi"
+                        @click="addToHal(data)"
+                      />
+                    </template>
+                    <span v-else class="text-xs text-gray-400">—</span>
+                  </template>
+                </div>
+              </template>
+            </Column>
           </DataTable>
 
           <Paginator
@@ -108,11 +135,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
+import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import SelectButton from 'primevue/selectbutton'
 import Message from 'primevue/message'
@@ -143,6 +171,7 @@ interface DoiListResponse {
 
 const { t } = useI18n()
 const router = useRouter()
+const toast = useToast()
 
 const env = ref<'prod' | 'test'>('test')
 const loading = ref(false)
@@ -151,6 +180,9 @@ const fetched = ref(false)
 const rows = ref<DoiListItem[]>([])
 const pageSize = 25
 const meta = ref<DoiListMeta>({ total: 0, totalPages: 0, page: 1 })
+// doi → true (synced) | false (not synced) | 'loading' | undefined (check failed / not applicable)
+const halSyncMap = ref<Record<string, boolean | 'loading'>>({})
+const syncingDoi = ref<string | null>(null)
 
 const envOptions = [
   { label: t('doiList.test'), value: 'test' },
@@ -160,6 +192,7 @@ const envOptions = [
 async function fetchDois(page: number) {
   loading.value = true
   error.value = ''
+  halSyncMap.value = {}
   try {
     const result = await invoke<DoiListResponse>('get_datacite_dois', {
       env: env.value,
@@ -171,8 +204,56 @@ async function fetchDois(page: number) {
     fetched.value = true
   } catch (err) {
     error.value = t('doiList.errors.fetchFailed', { error: String(err) })
+    return
   } finally {
     loading.value = false
+  }
+
+  checkHalSync()
+}
+
+function checkHalSync() {
+  const toCheck = rows.value.filter(row => row.halId && row.state === 'findable')
+  if (toCheck.length === 0) return
+
+  // Mark each eligible row as loading individually
+  const init: Record<string, 'loading'> = {}
+  for (const row of toCheck) init[row.doi] = 'loading'
+  halSyncMap.value = init
+
+  // Update each row as its check completes — no waiting for the slowest
+  for (const row of toCheck) {
+    invoke<{ existing_doi: string | null }>('get_hal_metadata', {
+      halId: row.halId!,
+      env: env.value,
+    })
+      .then(metadata => {
+        const synced = metadata.existing_doi?.toLowerCase() === row.doi.toLowerCase()
+        halSyncMap.value = { ...halSyncMap.value, [row.doi]: synced }
+      })
+      .catch(() => {
+        // Remove from map on error — column shows '—'
+        const { [row.doi]: _, ...rest } = halSyncMap.value
+        halSyncMap.value = rest
+      })
+  }
+}
+
+async function addToHal(row: DoiListItem) {
+  if (!row.halId) return
+  syncingDoi.value = row.doi
+  try {
+    await invoke('add_doi_to_hal_record', { halId: row.halId, doi: row.doi, env: env.value })
+    halSyncMap.value = { ...halSyncMap.value, [row.doi]: true }
+    toast.add({ severity: 'success', summary: t('doiList.halSync.addSuccess'), life: 4000 })
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: t('doiList.halSync.addFailed', { error: String(err) }),
+      life: 8000,
+    })
+  } finally {
+    syncingDoi.value = null
   }
 }
 
@@ -185,6 +266,8 @@ function stateSeverity(state: string): 'success' | 'secondary' | 'warn' {
   if (state === 'registered') return 'warn'
   return 'secondary'
 }
+
+onMounted(() => fetchDois(1))
 
 function onRowClick(event: { data: DoiListItem }) {
   const base = env.value === 'test' ? 'https://handle.test.datacite.org' : 'https://doi.org'

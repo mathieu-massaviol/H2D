@@ -14,6 +14,12 @@
       />
     </div>
 
+    <!-- Credentials missing warning -->
+    <Message v-if="credentialsMissing" severity="warn" :closable="false">
+      {{ t('createDoi.step1.credentialsMissing') }}
+      <RouterLink to="/credentials" class="underline ml-1">{{ t('nav.credentials') }}</RouterLink>
+    </Message>
+
     <!-- DOI Prefix -->
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">{{ t('createDoi.step1.prefix') }}</label>
@@ -50,8 +56,10 @@ import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
 import Select from 'primevue/select'
+import { RouterLink } from 'vue-router'
 
 const props = defineProps<{
   env: 'prod' | 'test'
@@ -70,6 +78,7 @@ const localPrefix = ref(props.prefix || '')
 const loadingPrefixes = ref(false)
 const prefixes = ref<string[]>([])
 const prefixError = ref('')
+const credentialsMissing = ref(false)
 
 const envOptions = [
   { label: t('createDoi.step1.test'), value: 'test' },
@@ -78,9 +87,15 @@ const envOptions = [
 
 async function loadPrefixes(env: 'prod' | 'test') {
   loadingPrefixes.value = true
+  credentialsMissing.value = false
   prefixes.value = []
   localPrefix.value = ''
   try {
+    const creds = await invoke<unknown>('get_datacite_credentials', { env })
+    if (!creds) {
+      credentialsMissing.value = true
+      return
+    }
     prefixes.value = await invoke<string[]>('get_datacite_prefixes', { env })
     if (prefixes.value.length === 1) {
       localPrefix.value = prefixes.value[0]

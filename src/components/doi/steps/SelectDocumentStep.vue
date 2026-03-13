@@ -35,9 +35,9 @@
 
     <!-- Metadata summary + confirm view -->
     <template v-else-if="view === 'confirm' && metadata">
-      <!-- Existing DOI warning -->
-      <Message v-if="metadata.existing_doi" severity="warn" :closable="false">
-        {{ t('createDoi.step2.existingDoiWarning', { doi: metadata.existing_doi }) }}
+      <!-- Existing DOI hard block -->
+      <Message v-if="metadata.existing_doi" severity="error" :closable="false">
+        {{ t('createDoi.step2.existingDoiError', { doi: metadata.existing_doi }) }}
       </Message>
 
       <div class="flex flex-col divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden bg-white">
@@ -128,6 +128,7 @@
           icon="pi pi-check"
           iconPos="right"
           :loading="creatingDraft"
+          :disabled="!!metadata.existing_doi"
           @click="confirmAndCreateDraft"
         />
       </div>

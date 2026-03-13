@@ -35,7 +35,7 @@
     "environment": "Environment",
     "prod": "Production",
     "test": "Test",
-    "fetch": "Fetch DOIs",
+    "fetch": "Refresh",
     "total": "{count} DOI(s) found",
     "empty": "No DOIs found for this account.",
     "columns": {
@@ -44,7 +44,15 @@
       "title": "Title",
       "state": "State",
       "year": "Year",
-      "type": "Resource type"
+      "type": "Resource type",
+      "halSync": "HAL sync"
+    },
+    "halSync": {
+      "synced": "Synced",
+      "notSynced": "Not synced",
+      "addToHal": "Add to HAL",
+      "addSuccess": "DOI successfully added to HAL",
+      "addFailed": "Error adding DOI to HAL: {error}"
     },
     "states": {
       "findable": "Findable",
@@ -73,6 +81,7 @@
       "prefixPlaceholder": "Select a prefix",
       "loadPrefixes": "Loading prefixes...",
       "noPrefixes": "No prefixes available",
+      "credentialsMissing": "DataCite credentials are not configured.",
       "fetchMetadata": "Fetch metadata",
       "errors": {
         "halIdRequired": "Please enter a HAL identifier or URL",
@@ -84,6 +93,7 @@
     "step2": {
       "title": "Review HAL metadata",
       "existingDoiWarning": "This document already has a DOI: {doi}",
+      "existingDoiError": "This document already has a DOI: {doi}. A new DOI cannot be created.",
       "fields": {
         "title": "Title(s)",
         "authors": "Author(s)",
@@ -117,6 +127,9 @@
         "fundingReferences": "Funding reference(s)"
       },
       "publishButton": "Validate and publish",
+      "cancelConfirmTitle": "Delete draft DOI",
+      "cancelConfirm": "Cancelling will permanently delete the draft DOI {doi}. Are you sure?",
+      "doiCopied": "DOI copied to clipboard",
       "errors": {
         "createFailed": "Error creating DOI: {error}"
       }
@@ -127,6 +140,7 @@
       "doi": "DOI",
       "viewOnDatacite": "View on DataCite",
       "viewOnHal": "View on HAL",
+      "halUpdateFailedDetailed": "The DOI was published on DataCite but could not be added to the HAL record. You can retry this from the DOI list.",
       "errors": {
         "publishFailed": "Error publishing DOI: {error}",
         "halUpdateFailed": "Error updating HAL record: {error}"
