@@ -1,4 +1,138 @@
 {
+  "common": {
+    "back": "Retour",
+    "next": "Suivant",
+    "cancel": "Annuler",
+    "loading": "Chargement...",
+    "confirm": "Confirmer",
+    "retry": "Réessayer",
+    "backToHome": "Retour à l'accueil"
+  },
+  "nav": {
+    "home": "Accueil",
+    "credentials": "Identifiants"
+  },
+  "home": {
+    "title": "hal2datacite",
+    "subtitle": "Créez et associez des DOIs DataCite à vos dépôts HAL",
+    "createDoi": {
+      "title": "Créer un DOI",
+      "description": "Créez un DOI DataCite pour un document HAL et ajoutez-le à la fiche HAL."
+    },
+    "doiList": {
+      "title": "Mes DOIs",
+      "description": "Consultez tous les DOIs enregistrés sur votre compte DataCite."
+    },
+    "batchDoi": {
+      "title": "Créer des DOIs en lot",
+      "description": "Créez des DOIs DataCite pour plusieurs documents HAL en une seule opération.",
+      "comingSoon": "Bientôt disponible"
+    }
+  },
+  "doiList": {
+    "title": "Mes DOIs",
+    "subtitle": "DOIs enregistrés sur votre compte DataCite",
+    "environment": "Environnement",
+    "prod": "Production",
+    "test": "Test",
+    "fetch": "Récupérer les DOIs",
+    "total": "{count} DOI(s) trouvé(s)",
+    "empty": "Aucun DOI trouvé pour ce compte.",
+    "columns": {
+      "doi": "DOI",
+      "halId": "Identifiant HAL",
+      "title": "Titre",
+      "state": "État",
+      "year": "Année",
+      "type": "Type de ressource"
+    },
+    "states": {
+      "findable": "Trouvable",
+      "draft": "Brouillon",
+      "registered": "Enregistré"
+    },
+    "errors": {
+      "fetchFailed": "Erreur lors de la récupération des DOIs : {error}"
+    }
+  },
+  "createDoi": {
+    "title": "Créer un DOI",
+    "steps": {
+      "config": "Configuration",
+      "selectDocument": "Choisir une notice",
+      "publish": "Valider et publier"
+    },
+    "step1": {
+      "title": "Configurer l'environnement",
+      "environment": "Environnement",
+      "prod": "Production",
+      "test": "Test",
+      "halId": "Identifiant HAL ou URL",
+      "halIdPlaceholder": "hal-XXXXXXX ou https://hal.science/hal-XXXXXXX",
+      "prefix": "Préfixe DOI",
+      "prefixPlaceholder": "Sélectionner un préfixe",
+      "loadPrefixes": "Chargement des préfixes...",
+      "noPrefixes": "Aucun préfixe disponible",
+      "fetchMetadata": "Récupérer les métadonnées",
+      "errors": {
+        "halIdRequired": "Veuillez saisir un identifiant ou une URL HAL",
+        "prefixRequired": "Veuillez sélectionner un préfixe DOI",
+        "fetchFailed": "Erreur lors de la récupération des métadonnées HAL : {error}",
+        "prefixesFailed": "Erreur lors de la récupération des préfixes : {error}"
+      }
+    },
+    "step2": {
+      "title": "Vérification des métadonnées HAL",
+      "existingDoiWarning": "Ce document possède déjà un DOI : {doi}",
+      "fields": {
+        "title": "Titre(s)",
+        "authors": "Auteur(s)",
+        "publicationDate": "Date de publication",
+        "docType": "Type de document",
+        "abstract": "Résumé",
+        "keywords": "Mots-clés",
+        "language": "Langue",
+        "halId": "Identifiant HAL",
+        "uri": "URL HAL"
+      },
+      "showMore": "Voir plus",
+      "showLess": "Voir moins"
+    },
+    "step3": {
+      "title": "DOI créé en brouillon",
+      "creating": "Création du DOI en cours...",
+      "draftDoi": "DOI (brouillon)",
+      "dataciteMetadata": "Métadonnées DataCite",
+      "fields": {
+        "creators": "Créateur(s)",
+        "titles": "Titre(s)",
+        "type": "Type de ressource",
+        "publicationYear": "Année de publication",
+        "publisher": "Éditeur",
+        "subjects": "Sujets",
+        "descriptions": "Description(s)",
+        "language": "Langue",
+        "rights": "Licence",
+        "alternateIdentifiers": "Identifiants alternatifs",
+        "fundingReferences": "Financement(s)"
+      },
+      "publishButton": "Valider et publier",
+      "errors": {
+        "createFailed": "Erreur lors de la création du DOI : {error}"
+      }
+    },
+    "step4": {
+      "title": "DOI publié avec succès",
+      "publishing": "Publication du DOI et mise à jour de la fiche HAL en cours...",
+      "doi": "DOI",
+      "viewOnDatacite": "Voir sur DataCite",
+      "viewOnHal": "Voir sur HAL",
+      "errors": {
+        "publishFailed": "Erreur lors de la publication du DOI : {error}",
+        "halUpdateFailed": "Erreur lors de la mise à jour de la fiche HAL : {error}"
+      }
+    }
+  },
   "credentials": {
     "title": "Identifiants API",
     "environment": "Environnement",

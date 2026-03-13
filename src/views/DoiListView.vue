@@ -1,0 +1,193 @@
+<template>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-5xl mx-auto px-6 space-y-6">
+      <!-- Header -->
+      <div class="flex items-center gap-4">
+        <Button
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          text
+          @click="router.push('/home')"
+        />
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">{{ t('doiList.title') }}</h1>
+          <p class="text-gray-600 mt-1">{{ t('doiList.subtitle') }}</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">{{ t('doiList.environment') }}</label>
+          <SelectButton
+            v-model="env"
+            :options="envOptions"
+            optionLabel="label"
+            optionValue="value"
+            :allowEmpty="false"
+          />
+        </div>
+        <Button
+          :label="t('doiList.fetch')"
+          icon="pi pi-refresh"
+          :loading="loading"
+          @click="fetchDois(1)"
+        />
+      </div>
+
+      <!-- Error -->
+      <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+
+      <!-- Results / Empty state -->
+      <template v-if="fetched && !loading">
+        <template v-if="rows.length > 0">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600">
+              {{ t('doiList.total', { count: meta.total }) }}
+            </span>
+          </div>
+
+          <DataTable
+            :value="rows"
+            :rows="pageSize"
+            :rowHover="true"
+            class="cursor-pointer"
+            @row-click="onRowClick"
+          >
+            <Column field="doi" :header="t('doiList.columns.doi')" style="min-width: 14rem">
+              <template #body="{ data }">
+                <span class="font-mono text-sm text-primary">{{ data.doi }}</span>
+              </template>
+            </Column>
+            <Column field="halId" :header="t('doiList.columns.halId')" style="width: 11rem">
+              <template #body="{ data }">
+                <span class="font-mono text-sm text-gray-700">{{ data.halId ?? '—' }}</span>
+              </template>
+            </Column>
+            <Column field="title" :header="t('doiList.columns.title')" style="min-width: 16rem">
+              <template #body="{ data }">
+                <span class="text-sm text-gray-900 line-clamp-2">{{ data.title || '—' }}</span>
+              </template>
+            </Column>
+            <Column field="state" :header="t('doiList.columns.state')" style="width: 8rem">
+              <template #body="{ data }">
+                <Tag
+                  :value="t(`doiList.states.${data.state}`)"
+                  :severity="stateSeverity(data.state)"
+                />
+              </template>
+            </Column>
+            <Column field="publicationYear" :header="t('doiList.columns.year')" style="width: 6rem">
+              <template #body="{ data }">
+                <span class="text-sm text-gray-600">{{ data.publicationYear ?? '—' }}</span>
+              </template>
+            </Column>
+            <Column field="resourceTypeGeneral" :header="t('doiList.columns.type')" style="width: 10rem">
+              <template #body="{ data }">
+                <span class="text-sm text-gray-600">{{ data.resourceTypeGeneral ?? '—' }}</span>
+              </template>
+            </Column>
+          </DataTable>
+
+          <Paginator
+            v-if="meta.totalPages > 1"
+            :rows="pageSize"
+            :totalRecords="meta.total"
+            :first="(meta.page - 1) * pageSize"
+            @page="onPageChange"
+          />
+        </template>
+
+        <div v-else class="flex flex-col items-center gap-3 py-16 text-gray-500">
+          <i class="pi pi-inbox text-4xl" />
+          <span class="text-sm">{{ t('doiList.empty') }}</span>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { invoke } from '@tauri-apps/api/core'
+import { openUrl } from '@tauri-apps/plugin-opener'
+import Button from 'primevue/button'
+import SelectButton from 'primevue/selectbutton'
+import Message from 'primevue/message'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Tag from 'primevue/tag'
+import Paginator from 'primevue/paginator'
+
+interface DoiListItem {
+  doi: string
+  title: string
+  state: string
+  publicationYear: number | null
+  resourceTypeGeneral: string | null
+  halId: string | null
+}
+
+interface DoiListMeta {
+  total: number
+  totalPages: number
+  page: number
+}
+
+interface DoiListResponse {
+  items: DoiListItem[]
+  meta: DoiListMeta
+}
+
+const { t } = useI18n()
+const router = useRouter()
+
+const env = ref<'prod' | 'test'>('test')
+const loading = ref(false)
+const error = ref('')
+const fetched = ref(false)
+const rows = ref<DoiListItem[]>([])
+const pageSize = 25
+const meta = ref<DoiListMeta>({ total: 0, totalPages: 0, page: 1 })
+
+const envOptions = [
+  { label: t('doiList.test'), value: 'test' },
+  { label: t('doiList.prod'), value: 'prod' },
+]
+
+async function fetchDois(page: number) {
+  loading.value = true
+  error.value = ''
+  try {
+    const result = await invoke<DoiListResponse>('get_datacite_dois', {
+      env: env.value,
+      page,
+      pageSize,
+    })
+    rows.value = result.items
+    meta.value = result.meta
+    fetched.value = true
+  } catch (err) {
+    error.value = t('doiList.errors.fetchFailed', { error: String(err) })
+  } finally {
+    loading.value = false
+  }
+}
+
+function onPageChange(event: { page: number }) {
+  fetchDois(event.page + 1)
+}
+
+function stateSeverity(state: string): 'success' | 'secondary' | 'warn' {
+  if (state === 'findable') return 'success'
+  if (state === 'registered') return 'warn'
+  return 'secondary'
+}
+
+function onRowClick(event: { data: DoiListItem }) {
+  const base = env.value === 'test' ? 'https://handle.test.datacite.org' : 'https://doi.org'
+  openUrl(`${base}/${event.data.doi}`)
+}
+</script>

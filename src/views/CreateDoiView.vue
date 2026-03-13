@@ -1,0 +1,102 @@
+<template>
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-6 space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">{{ t('createDoi.title') }}</h1>
+        <Button
+          :label="t('common.backToHome')"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          outlined
+          size="small"
+          @click="router.push('/home')"
+        />
+      </div>
+
+      <Stepper :value="activeStep" linear>
+        <StepList>
+          <Step value="1">{{ t('createDoi.steps.config') }}</Step>
+          <Step value="2">{{ t('createDoi.steps.selectDocument') }}</Step>
+          <Step value="3">{{ t('createDoi.steps.publish') }}</Step>
+        </StepList>
+
+        <StepPanels>
+          <StepPanel value="1" class="pt-6">
+            <ConfigStep
+              :env="env"
+              :prefix="selectedPrefix"
+              @next="onStep1Next"
+            />
+          </StepPanel>
+
+          <StepPanel value="2" class="pt-6">
+            <SelectDocumentStep
+              v-if="activeStep === '2'"
+              :env="env"
+              :prefix="selectedPrefix"
+              :hal-id="halId"
+              @next="onStep2Next"
+              @back="activeStep = '1'"
+            />
+          </StepPanel>
+
+          <StepPanel value="3" class="pt-6">
+            <PublishStep
+              v-if="draftDoi && dataciteMetadata && activeStep === '3'"
+              :draft-doi="draftDoi"
+              :datacite-metadata="dataciteMetadata"
+              :hal-id="halId"
+              :hal-uri="halUri"
+              :env="env"
+              @home="router.push('/home')"
+              @cancel="router.push('/home')"
+            />
+          </StepPanel>
+        </StepPanels>
+      </Stepper>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import Stepper from 'primevue/stepper'
+import StepList from 'primevue/steplist'
+import Step from 'primevue/step'
+import StepPanels from 'primevue/steppanels'
+import StepPanel from 'primevue/steppanel'
+import Button from 'primevue/button'
+import ConfigStep from '../components/doi/steps/ConfigStep.vue'
+import SelectDocumentStep from '../components/doi/steps/SelectDocumentStep.vue'
+import PublishStep from '../components/doi/steps/PublishStep.vue'
+import type { HalMetadata } from '../components/doi/steps/SelectDocumentStep.vue'
+import type { DataciteMetadata } from '../components/doi/steps/PublishStep.vue'
+
+const { t } = useI18n()
+const router = useRouter()
+
+const activeStep = ref('1')
+const env = ref<'prod' | 'test'>('test')
+const selectedPrefix = ref('')
+const halId = ref('')
+const halUri = ref<string | null>(null)
+const draftDoi = ref('')
+const dataciteMetadata = ref<DataciteMetadata | null>(null)
+
+function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string) {
+  env.value = selectedEnv
+  selectedPrefix.value = prefix
+  activeStep.value = '2'
+}
+
+function onStep2Next(id: string, metadata: HalMetadata, doi: string, dcMeta: DataciteMetadata) {
+  halId.value = id
+  halUri.value = metadata.uri
+  draftDoi.value = doi
+  dataciteMetadata.value = dcMeta
+  activeStep.value = '3'
+}
+</script>

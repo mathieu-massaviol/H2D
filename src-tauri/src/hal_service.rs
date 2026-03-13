@@ -13,6 +13,14 @@ fn hal_base_url(env: &str) -> &'static str {
     }
 }
 
+/// Base URL for the HAL web frontend (used to fetch TEI documents).
+fn hal_web_url(env: &str) -> &'static str {
+    match env {
+        "test" => "https://hal.halpreprod.archives-ouvertes.fr",
+        _ => "https://hal.science",
+    }
+}
+
 // ── Normalisation de l'identifiant HAL ────────────────────────────────────
 
 /// Accepte un halId (hal-XXXXXXX) ou une URL HAL complète.
@@ -390,16 +398,17 @@ pub async fn add_doi_to_hal_record(
     let client = reqwest::Client::new();
 
     // 1. Récupérer le TEI de la fiche HAL
-    let tei_url = format!("{}/sword/{}/tei", base, normalized);
+    let tei_url = format!("{}/{}/tei", hal_web_url(&env), normalized);
     let tei_response = client
         .get(&tei_url)
-        .basic_auth(&login, Some(&password))
         .send()
         .await
         .map_err(|e| format!("HAL TEI request failed: {e}"))?;
 
     if !tei_response.status().is_success() {
-        return Err(format!("HAL TEI returned status {}", tei_response.status()));
+        let status = tei_response.status();
+        let body = tei_response.text().await.unwrap_or_default();
+        return Err(format!("HAL TEI GET {tei_url} returned status {status}: {body}"));
     }
 
     let tei_xml = tei_response

@@ -1,4 +1,138 @@
 {
+  "common": {
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "backToHome": "Back to home"
+  },
+  "nav": {
+    "home": "Home",
+    "credentials": "Credentials"
+  },
+  "home": {
+    "title": "hal2datacite",
+    "subtitle": "Create and associate DataCite DOIs with your HAL deposits",
+    "createDoi": {
+      "title": "Create a DOI",
+      "description": "Create a DataCite DOI for a HAL document and add it to the HAL record."
+    },
+    "doiList": {
+      "title": "My DOIs",
+      "description": "Browse all DOIs registered with your DataCite account."
+    },
+    "batchDoi": {
+      "title": "Batch DOI creation",
+      "description": "Create DataCite DOIs for multiple HAL documents in a single operation.",
+      "comingSoon": "Coming soon"
+    }
+  },
+  "doiList": {
+    "title": "My DOIs",
+    "subtitle": "DOIs registered with your DataCite account",
+    "environment": "Environment",
+    "prod": "Production",
+    "test": "Test",
+    "fetch": "Fetch DOIs",
+    "total": "{count} DOI(s) found",
+    "empty": "No DOIs found for this account.",
+    "columns": {
+      "doi": "DOI",
+      "halId": "HAL identifier",
+      "title": "Title",
+      "state": "State",
+      "year": "Year",
+      "type": "Resource type"
+    },
+    "states": {
+      "findable": "Findable",
+      "draft": "Draft",
+      "registered": "Registered"
+    },
+    "errors": {
+      "fetchFailed": "Error fetching DOIs: {error}"
+    }
+  },
+  "createDoi": {
+    "title": "Create a DOI",
+    "steps": {
+      "config": "Configuration",
+      "selectDocument": "Select document",
+      "publish": "Validate & publish"
+    },
+    "step1": {
+      "title": "Select a HAL document",
+      "environment": "Environment",
+      "prod": "Production",
+      "test": "Test",
+      "halId": "HAL identifier or URL",
+      "halIdPlaceholder": "hal-XXXXXXX or https://hal.science/hal-XXXXXXX",
+      "prefix": "DOI prefix",
+      "prefixPlaceholder": "Select a prefix",
+      "loadPrefixes": "Loading prefixes...",
+      "noPrefixes": "No prefixes available",
+      "fetchMetadata": "Fetch metadata",
+      "errors": {
+        "halIdRequired": "Please enter a HAL identifier or URL",
+        "prefixRequired": "Please select a DOI prefix",
+        "fetchFailed": "Error fetching HAL metadata: {error}",
+        "prefixesFailed": "Error fetching prefixes: {error}"
+      }
+    },
+    "step2": {
+      "title": "Review HAL metadata",
+      "existingDoiWarning": "This document already has a DOI: {doi}",
+      "fields": {
+        "title": "Title(s)",
+        "authors": "Author(s)",
+        "publicationDate": "Publication date",
+        "docType": "Document type",
+        "abstract": "Abstract",
+        "keywords": "Keywords",
+        "language": "Language",
+        "halId": "HAL identifier",
+        "uri": "HAL URL"
+      },
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "step3": {
+      "title": "Draft DOI created",
+      "creating": "Creating DOI...",
+      "draftDoi": "DOI (draft)",
+      "dataciteMetadata": "DataCite metadata",
+      "fields": {
+        "creators": "Creator(s)",
+        "titles": "Title(s)",
+        "type": "Resource type",
+        "publicationYear": "Publication year",
+        "publisher": "Publisher",
+        "subjects": "Subjects",
+        "descriptions": "Description(s)",
+        "language": "Language",
+        "rights": "License",
+        "alternateIdentifiers": "Alternate identifiers",
+        "fundingReferences": "Funding reference(s)"
+      },
+      "publishButton": "Validate and publish",
+      "errors": {
+        "createFailed": "Error creating DOI: {error}"
+      }
+    },
+    "step4": {
+      "title": "DOI published successfully",
+      "publishing": "Publishing DOI and updating HAL record...",
+      "doi": "DOI",
+      "viewOnDatacite": "View on DataCite",
+      "viewOnHal": "View on HAL",
+      "errors": {
+        "publishFailed": "Error publishing DOI: {error}",
+        "halUpdateFailed": "Error updating HAL record: {error}"
+      }
+    }
+  },
   "credentials": {
     "title": "API Credentials",
     "environment": "Environment",

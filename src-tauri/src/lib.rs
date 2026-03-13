@@ -51,6 +51,10 @@ pub fn run() {
             hal_service::add_doi_to_hal_record,
             datacite_service::map_hal_to_datacite,
             datacite_service::create_doi,
+            datacite_service::get_datacite_prefixes,
+            datacite_service::publish_doi,
+            datacite_service::delete_doi,
+            datacite_service::get_datacite_dois,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

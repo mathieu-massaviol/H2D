@@ -444,16 +444,7 @@ pub async fn create_doi(
     env: String,
     publish: bool,
 ) -> Result<String, String> {
-    let store_arc = store.0.clone();
-    let env_clone = env.clone();
-    let (repository_id, password) = tauri::async_runtime::spawn_blocking(move || {
-        let vault = store_arc.lock().map_err(|e| e.to_string())?;
-        let repository_id = get_vault_secret(&vault, "datacite", &env_clone, "repository_id")?;
-        let password = get_vault_secret(&vault, "datacite", &env_clone, "password")?;
-        Ok::<(String, String), String>((repository_id, password))
-    })
-    .await
-    .map_err(|e| e.to_string())??;
+    let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
 
     let metadata = map(hal_metadata)?;
 
@@ -483,11 +474,7 @@ pub async fn create_doi(
         .await
         .map_err(|e| format!("DataCite API request failed: {e}"))?;
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        return Err(format!("DataCite API returned status {status}: {body}"));
-    }
+    let response = require_success(response).await?;
 
     let doi_response: DataciteDoiResponse = response
         .json()
@@ -504,6 +491,322 @@ pub async fn map_hal_to_datacite(
     hal_metadata: HalMetadata,
 ) -> Result<DataciteMetadata, String> {
     map(hal_metadata)
+}
+
+// ── Helpers internes ────────────────────────────────────────────────────────
+
+async fn fetch_datacite_credentials(
+    store: &CredentialStore,
+    env: String,
+) -> Result<(String, String), String> {
+    let store_arc = store.0.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let vault = store_arc.lock().map_err(|e| e.to_string())?;
+        let repository_id = get_vault_secret(&vault, "datacite", &env, "repository_id")?;
+        let password = get_vault_secret(&vault, "datacite", &env, "password")?;
+        Ok::<(String, String), String>((repository_id, password))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+async fn require_success(response: reqwest::Response) -> Result<reqwest::Response, String> {
+    if response.status().is_success() {
+        return Ok(response);
+    }
+    let status = response.status();
+    let body = response.text().await.unwrap_or_default();
+    Err(format!("DataCite API returned status {status}: {body}"))
+}
+
+// ── Structures pour get_datacite_prefixes ──────────────────────────────────
+
+#[derive(Deserialize, Debug)]
+struct ClientPrefixRelationshipData {
+    id: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct ClientPrefixRelationshipPrefix {
+    data: ClientPrefixRelationshipData,
+}
+
+#[derive(Deserialize, Debug)]
+struct ClientPrefixRelationships {
+    prefix: ClientPrefixRelationshipPrefix,
+}
+
+#[derive(Deserialize, Debug)]
+struct ClientPrefixItem {
+    relationships: ClientPrefixRelationships,
+}
+
+#[derive(Deserialize, Debug)]
+struct ClientPrefixesResponse {
+    data: Vec<ClientPrefixItem>,
+}
+
+/// Récupère la liste des préfixes DOI disponibles pour un compte DataCite.
+#[tauri::command]
+pub async fn get_datacite_prefixes(
+    store: State<'_, CredentialStore>,
+    env: String,
+) -> Result<Vec<String>, String> {
+    let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
+
+    let url = format!(
+        "{}/client-prefixes?client-id={}&page[size]=100",
+        datacite_base_url(&env),
+        repository_id
+    );
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .basic_auth(&repository_id, Some(&password))
+        .header("Accept", "application/vnd.api+json")
+        .send()
+        .await
+        .map_err(|e| format!("DataCite API request failed: {e}"))?;
+
+    let response = require_success(response).await?;
+
+    let parsed: ClientPrefixesResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse DataCite prefixes response: {e}"))?;
+
+    let prefixes = parsed
+        .data
+        .into_iter()
+        .map(|item| item.relationships.prefix.data.id)
+        .collect();
+
+    Ok(prefixes)
+}
+
+// ── Structures pour publish_doi ─────────────────────────────────────────────
+
+#[derive(Serialize, Debug)]
+struct PublishDoiAttributes {
+    event: &'static str,
+}
+
+#[derive(Serialize, Debug)]
+struct PublishDoiData {
+    #[serde(rename = "type")]
+    data_type: &'static str,
+    attributes: PublishDoiAttributes,
+}
+
+#[derive(Serialize, Debug)]
+struct PublishDoiRequest {
+    data: PublishDoiData,
+}
+
+/// Publie un DOI en brouillon (passe son état à "findable").
+#[tauri::command]
+pub async fn publish_doi(
+    store: State<'_, CredentialStore>,
+    doi: String,
+    env: String,
+) -> Result<(), String> {
+    let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
+
+    let request_body = PublishDoiRequest {
+        data: PublishDoiData {
+            data_type: "dois",
+            attributes: PublishDoiAttributes { event: "publish" },
+        },
+    };
+
+    let url = format!("{}/dois/{}", datacite_base_url(&env), doi);
+    let client = reqwest::Client::new();
+    let response = client
+        .put(&url)
+        .basic_auth(&repository_id, Some(&password))
+        .header("Content-Type", "application/vnd.api+json")
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("DataCite API request failed: {e}"))?;
+
+    require_success(response).await?;
+
+    Ok(())
+}
+
+/// Supprime un DOI en état brouillon (draft) sur DataCite.
+#[tauri::command]
+pub async fn delete_doi(
+    store: State<'_, CredentialStore>,
+    doi: String,
+    env: String,
+) -> Result<(), String> {
+    let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
+
+    let url = format!("{}/dois/{}", datacite_base_url(&env), doi);
+    let client = reqwest::Client::new();
+    let response = client
+        .delete(&url)
+        .basic_auth(&repository_id, Some(&password))
+        .send()
+        .await
+        .map_err(|e| format!("DataCite API request failed: {e}"))?;
+
+    require_success(response).await?;
+
+    Ok(())
+}
+
+// ── Structures pour get_datacite_dois ──────────────────────────────────────
+
+#[derive(Deserialize, Debug)]
+struct DoiApiTitle {
+    title: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DoiApiTypes {
+    resource_type_general: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DoiApiIdentifier {
+    identifier: String,
+    identifier_type: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DoiApiAttributes {
+    doi: String,
+    titles: Vec<DoiApiTitle>,
+    state: String,
+    publication_year: Option<u32>,
+    types: Option<DoiApiTypes>,
+    identifiers: Option<Vec<DoiApiIdentifier>>,
+}
+
+#[derive(Deserialize, Debug)]
+struct DoiApiEntry {
+    attributes: DoiApiAttributes,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct DoiApiMeta {
+    total: u32,
+    total_pages: u32,
+    page: u32,
+}
+
+#[derive(Deserialize, Debug)]
+struct DoiApiListResponse {
+    data: Vec<DoiApiEntry>,
+    meta: DoiApiMeta,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DoiListItem {
+    pub doi: String,
+    pub title: String,
+    pub state: String,
+    pub publication_year: Option<u32>,
+    pub resource_type_general: Option<String>,
+    pub hal_id: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DoiListMeta {
+    pub total: u32,
+    pub total_pages: u32,
+    pub page: u32,
+}
+
+#[derive(Serialize, Debug)]
+pub struct DoiListResponse {
+    pub items: Vec<DoiListItem>,
+    pub meta: DoiListMeta,
+}
+
+/// Récupère la liste des DOIs créés pour un compte DataCite.
+#[tauri::command]
+pub async fn get_datacite_dois(
+    store: State<'_, CredentialStore>,
+    env: String,
+    page: u32,
+    page_size: u32,
+) -> Result<DoiListResponse, String> {
+    let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
+
+    let url = format!(
+        "{}/dois?client-id={}&page[number]={}&page[size]={}",
+        datacite_base_url(&env),
+        repository_id,
+        page,
+        page_size
+    );
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .basic_auth(&repository_id, Some(&password))
+        .header("Accept", "application/vnd.api+json")
+        .send()
+        .await
+        .map_err(|e| format!("DataCite API request failed: {e}"))?;
+
+    let response = require_success(response).await?;
+
+    let parsed: DoiApiListResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse DataCite DOI list response: {e}"))?;
+
+    let items = parsed
+        .data
+        .into_iter()
+        .map(|entry| {
+            let title = entry
+                .attributes
+                .titles
+                .into_iter()
+                .next()
+                .map(|t| t.title)
+                .unwrap_or_default();
+            let hal_id = entry
+                .attributes
+                .identifiers
+                .and_then(|ids| {
+                    ids.into_iter()
+                        .find(|id| id.identifier_type.to_uppercase().contains("HAL"))
+                        .map(|id| id.identifier)
+                });
+            DoiListItem {
+                doi: entry.attributes.doi,
+                title,
+                state: entry.attributes.state,
+                publication_year: entry.attributes.publication_year,
+                resource_type_general: entry
+                    .attributes
+                    .types
+                    .and_then(|t| t.resource_type_general),
+                hal_id,
+            }
+        })
+        .collect();
+
+    Ok(DoiListResponse {
+        items,
+        meta: DoiListMeta {
+            total: parsed.meta.total,
+            total_pages: parsed.meta.total_pages,
+            page: parsed.meta.page,
+        },
+    })
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
