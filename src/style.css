@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
+
+@theme {
+  --spacing-page-x: 2rem;
+  --spacing-page-y: 1.75rem;
+}

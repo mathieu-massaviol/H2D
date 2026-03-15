@@ -1,82 +1,86 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-3xl mx-auto px-6 space-y-6">
-      <!-- Header -->
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ t('home.title') }}</h1>
-        <p class="text-gray-600 mt-1">{{ t('home.subtitle') }}</p>
-      </div>
+  <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
+    <!-- Header -->
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">{{ t('home.title') }}</h1>
+      <p class="text-gray-500 mt-1">{{ t('home.subtitle') }}</p>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Create single DOI -->
-        <Card>
-          <template #title>
-            <span class="flex items-center gap-2">
-              <i class="pi pi-plus-circle text-primary" />
-              {{ t('home.createDoi.title') }}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <!-- Create single DOI -->
+      <Card>
+        <template #title>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
+              <i class="pi pi-plus-circle text-primary text-lg" />
             </span>
-          </template>
-          <template #content>
-            <div class="flex flex-col gap-4">
-              <p class="text-gray-600 text-sm leading-relaxed">
-                {{ t('home.createDoi.description') }}
-              </p>
-              <Button
-                :label="t('home.createDoi.title')"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                @click="router.push('/create-doi')"
-              />
-            </div>
-          </template>
-        </Card>
+            {{ t('home.createDoi.title') }}
+          </span>
+        </template>
+        <template #content>
+          <div class="flex flex-col gap-4">
+            <p class="text-gray-500 text-sm leading-relaxed">
+              {{ t('home.createDoi.description') }}
+            </p>
+            <Button
+              :label="t('home.createDoi.title')"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              @click="router.push('/create-doi')"
+            />
+          </div>
+        </template>
+      </Card>
 
-        <!-- List DOIs -->
-        <Card>
-          <template #title>
-            <span class="flex items-center gap-2">
-              <i class="pi pi-table text-primary" />
-              {{ t('home.doiList.title') }}
+      <!-- List DOIs -->
+      <Card>
+        <template #title>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
+              <i class="pi pi-table text-primary text-lg" />
             </span>
-          </template>
-          <template #content>
-            <div class="flex flex-col gap-4">
-              <p class="text-gray-600 text-sm leading-relaxed">
-                {{ t('home.doiList.description') }}
-              </p>
-              <Button
-                :label="t('home.doiList.title')"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                @click="router.push('/doi-list')"
-              />
-            </div>
-          </template>
-        </Card>
+            {{ t('home.doiList.title') }}
+          </span>
+        </template>
+        <template #content>
+          <div class="flex flex-col gap-4">
+            <p class="text-gray-500 text-sm leading-relaxed">
+              {{ t('home.doiList.description') }}
+            </p>
+            <Button
+              :label="t('home.doiList.title')"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              @click="router.push('/doi-list')"
+            />
+          </div>
+        </template>
+      </Card>
 
-        <!-- Batch DOI creation -->
-        <Card>
-          <template #title>
-            <span class="flex items-center gap-2">
-              <i class="pi pi-list text-primary" />
-              {{ t('home.batchDoi.title') }}
+      <!-- Batch DOI creation -->
+      <Card>
+        <template #title>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
+              <i class="pi pi-list text-primary text-lg" />
             </span>
-          </template>
-          <template #content>
-            <div class="flex flex-col gap-4">
-              <p class="text-gray-600 text-sm leading-relaxed">
-                {{ t('home.batchDoi.description') }}
-              </p>
-              <Button
-                :label="t('home.batchDoi.title')"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                @click="router.push('/batch-doi')"
-              />
-            </div>
-          </template>
-        </Card>
-      </div>
+            {{ t('home.batchDoi.title') }}
+          </span>
+        </template>
+        <template #content>
+          <div class="flex flex-col gap-4">
+            <p class="text-gray-500 text-sm leading-relaxed">
+              {{ t('home.batchDoi.description') }}
+            </p>
+            <Button
+              :label="t('home.batchDoi.title')"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              @click="router.push('/batch-doi')"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
@@ -86,7 +90,6 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
-import Tag from 'primevue/tag'
 
 const { t } = useI18n()
 const router = useRouter()

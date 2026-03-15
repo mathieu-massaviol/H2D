@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 px-8 pb-4">
+  <div class="flex flex-col gap-4 pb-4 px-4">
     <h2 class="text-lg font-semibold text-gray-900">{{ t('batchDoi.step5.title') }}</h2>
 
     <!-- Summary chips -->
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Results table -->
-    <DataTable :value="props.documents" size="small" scrollable scroll-height="400px">
+    <DataTable :value="props.documents" size="small" scrollable scroll-height="450px">
       <Column field="halId" :header="t('batchDoi.step5.columns.halId')" style="width: 12rem">
         <template #body="{ data }: { data: BatchDocument }">
           <span class="font-mono text-xs">{{ data.halId }}</span>

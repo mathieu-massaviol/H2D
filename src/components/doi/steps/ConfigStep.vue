@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 max-w-xl px-8 pb-4">
+  <div class="flex flex-col gap-4 max-w-xl mx-auto pb-4 px-4">
     <h2 class="text-lg font-semibold text-gray-900">{{ t('createDoi.step1.title') }}</h2>
 
     <!-- Environment -->

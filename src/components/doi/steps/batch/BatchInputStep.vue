@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 max-w-2xl px-8 pb-4">
+  <div class="flex flex-col gap-4 max-w-2xl mx-auto pb-4 px-4">
     <h2 class="text-lg font-semibold text-gray-900">{{ t('batchDoi.step2.title') }}</h2>
     <p class="text-sm text-gray-600 leading-relaxed">{{ t('batchDoi.step2.instructions') }}</p>
 

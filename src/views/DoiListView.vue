@@ -1,6 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-5xl mx-auto px-6 space-y-6">
+  <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
       <!-- Header -->
       <div class="flex items-center gap-4">
         <Button
@@ -51,25 +50,26 @@
             :value="rows"
             :rows="pageSize"
             :rowHover="true"
+            striped-rows
             class="cursor-pointer"
             @row-click="onRowClick"
           >
-            <Column field="doi" :header="t('doiList.columns.doi')" style="min-width: 14rem">
+            <Column field="doi" :header="t('doiList.columns.doi')" style="min-width: 13rem">
               <template #body="{ data }">
-                <span class="font-mono text-sm text-primary">{{ data.doi }}</span>
+                <span class="font-mono text-sm text-primary truncate block">{{ data.doi }}</span>
               </template>
             </Column>
-            <Column field="halId" :header="t('doiList.columns.halId')" style="width: 11rem">
+            <Column field="halId" :header="t('doiList.columns.halId')" style="width: 10rem">
               <template #body="{ data }">
                 <span class="font-mono text-sm text-gray-700">{{ data.halId ?? '—' }}</span>
               </template>
             </Column>
-            <Column field="title" :header="t('doiList.columns.title')" style="min-width: 16rem">
+            <Column field="title" :header="t('doiList.columns.title')">
               <template #body="{ data }">
                 <span class="text-sm text-gray-900 line-clamp-2">{{ data.title || '—' }}</span>
               </template>
             </Column>
-            <Column field="state" :header="t('doiList.columns.state')" style="width: 8rem">
+            <Column field="state" :header="t('doiList.columns.state')" style="width: 7rem">
               <template #body="{ data }">
                 <Tag
                   :value="t(`doiList.states.${data.state}`)"
@@ -77,17 +77,7 @@
                 />
               </template>
             </Column>
-            <Column field="publicationYear" :header="t('doiList.columns.year')" style="width: 6rem">
-              <template #body="{ data }">
-                <span class="text-sm text-gray-600">{{ data.publicationYear ?? '—' }}</span>
-              </template>
-            </Column>
-            <Column field="resourceTypeGeneral" :header="t('doiList.columns.type')" style="width: 10rem">
-              <template #body="{ data }">
-                <span class="text-sm text-gray-600">{{ data.resourceTypeGeneral ?? '—' }}</span>
-              </template>
-            </Column>
-            <Column :header="t('doiList.columns.halSync')" style="width: 9rem">
+            <Column :header="t('doiList.columns.halSync')" style="width: 10rem">
               <template #body="{ data }">
                 <div class="flex items-center gap-2" @click.stop>
                   <!-- Only findable DOIs with a HAL ID are checked -->
@@ -130,7 +120,6 @@
           <span class="text-sm">{{ t('doiList.empty') }}</span>
         </div>
       </template>
-    </div>
   </div>
 </template>
 

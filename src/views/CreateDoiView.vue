@@ -1,6 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-6 space-y-6">
+  <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">{{ t('createDoi.title') }}</h1>
@@ -57,7 +56,6 @@
           </StepPanel>
         </StepPanels>
       </Stepper>
-    </div>
   </div>
 </template>
 

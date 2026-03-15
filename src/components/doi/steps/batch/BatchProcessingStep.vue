@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 px-8 pb-4">
+  <div class="flex flex-col gap-4 pb-4 px-4">
     <h2 class="text-lg font-semibold text-gray-900">{{ t('batchDoi.step4.title') }}</h2>
 
     <!-- Progress bar -->
@@ -28,7 +28,7 @@
       :row-class="rowClass"
       size="small"
       scrollable
-      scroll-height="360px"
+      scroll-height="450px"
     >
       <Column field="halId" :header="t('batchDoi.step3.columns.halId')" style="width: 14rem">
         <template #body="{ data }: { data: BatchDocument }">

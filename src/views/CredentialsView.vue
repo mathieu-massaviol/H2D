@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-2xl mx-auto px-6 space-y-6">
+  <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
+    <div class="max-w-2xl space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">{{ t('credentials.title') }}</h1>

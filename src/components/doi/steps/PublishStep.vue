@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 max-w-2xl px-8 pb-4">
+  <div class="flex flex-col gap-4 max-w-2xl mx-auto pb-4 px-4">
     <!-- Success state -->
     <template v-if="done">
       <Message v-if="halError" severity="warn" :closable="false">

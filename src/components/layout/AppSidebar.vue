@@ -1,7 +1,11 @@
 <template>
-  <aside class="flex flex-col w-52 min-h-screen border-r border-gray-200 bg-white shrink-0">
-    <div class="flex items-center px-4 py-5 border-b border-gray-200">
-      <span class="text-primary font-bold text-lg tracking-tight">hal2datacite</span>
+  <aside class="flex flex-col w-56 min-h-screen border-r border-gray-200 bg-white shrink-0">
+    <!-- Brand -->
+    <div class="flex items-center gap-3 px-4 py-5 border-b border-gray-200">
+      <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0">
+        <i class="pi pi-link text-primary text-sm" />
+      </div>
+      <span class="text-gray-900 font-bold text-base tracking-tight">hal2datacite</span>
     </div>
 
     <Menu :model="navItems" class="border-none! shadow-none! w-full! flex-1">
@@ -20,6 +24,7 @@
       </template>
     </Menu>
 
+    <!-- Language switcher -->
     <div class="flex items-center justify-center gap-1 px-4 py-3 border-t border-gray-200">
       <button
         v-for="lang in languages"
