@@ -147,10 +147,7 @@ const localDocs = ref<BatchDocument[]>(props.documents.map((d) => ({ ...d })))
 const cancelRequested = ref(false)
 const done = ref(false)
 const processed = ref(0)
-
-const totalToProcess = computed(
-  () => localDocs.value.filter((d) => d.selected && d.status === 'ready').length,
-)
+const totalToProcess = ref(0)
 const progressPercent = computed(() =>
   totalToProcess.value === 0 ? 0 : Math.round((processed.value / totalToProcess.value) * 100),
 )
@@ -170,6 +167,7 @@ function rowClass(data: BatchDocument) {
 
 async function startProcessing() {
   const queue = localDocs.value.filter((d) => d.selected && d.status === 'ready')
+  totalToProcess.value = queue.length
 
   for (const doc of queue) {
     if (cancelRequested.value) break
