@@ -1,72 +1,96 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
-    <div class="max-w-2xl space-y-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">{{ t('credentials.title') }}</h1>
+    <h1 class="text-2xl font-bold text-gray-900">{{ t('credentials.title') }}</h1>
 
-        <!-- Environment selector -->
-        <div class="flex items-center gap-3">
-          <span class="text-sm font-medium text-gray-600">{{ t('credentials.environment') }}</span>
-          <SelectButton v-model="env" :options="envOptions" option-label="label" option-value="value" />
-        </div>
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- Production column -->
+      <div class="flex-1 space-y-4">
+        <h2 class="font-semibold text-gray-700 flex items-center gap-2">
+          <Tag :value="t('credentials.prod')" severity="danger" />
+        </h2>
+        <CredentialSection
+          ref="halSectionProdRef"
+          v-bind="halSectionProps"
+          :display-value="halInfoProd?.login ?? null"
+          :saving="halSavingProd"
+          :deleting="halDeletingProd"
+          @save="(id, pw) => saveHal('prod', id, pw)"
+          @delete="confirmDelete('hal', 'prod')"
+        />
+        <CredentialSection
+          ref="dataciteSectionProdRef"
+          v-bind="dataciteSectionProps"
+          :display-value="dataciteInfoProd?.repository_id ?? null"
+          :saving="dataciteSavingProd"
+          :deleting="dataciteDeletingProd"
+          @save="(id, pw) => saveDatacite('prod', id, pw)"
+          @delete="confirmDelete('datacite', 'prod')"
+        />
       </div>
 
-      <!-- HAL section -->
-      <CredentialSection
-        ref="halSectionRef"
-        v-bind="halSectionProps"
-        :display-value="halInfo?.login ?? null"
-        :saving="halSaving"
-        :deleting="halDeleting"
-        @save="saveHal"
-        @delete="confirmDelete('hal')"
-      />
-
-      <!-- DataCite section -->
-      <CredentialSection
-        ref="dataciteSectionRef"
-        v-bind="dataciteSectionProps"
-        :display-value="dataciteInfo?.repository_id ?? null"
-        :saving="dataciteSaving"
-        :deleting="dataciteDeleting"
-        @save="saveDatacite"
-        @delete="confirmDelete('datacite')"
-      />
+      <!-- Test column -->
+      <div class="flex-1 space-y-4">
+        <h2 class="font-semibold text-gray-700 flex items-center gap-2">
+          <Tag :value="t('credentials.test')" severity="secondary" />
+        </h2>
+        <CredentialSection
+          ref="halSectionTestRef"
+          v-bind="halSectionProps"
+          :display-value="halInfoTest?.login ?? null"
+          :saving="halSavingTest"
+          :deleting="halDeletingTest"
+          @save="(id, pw) => saveHal('test', id, pw)"
+          @delete="confirmDelete('hal', 'test')"
+        />
+        <CredentialSection
+          ref="dataciteSectionTestRef"
+          v-bind="dataciteSectionProps"
+          :display-value="dataciteInfoTest?.repository_id ?? null"
+          :saving="dataciteSavingTest"
+          :deleting="dataciteDeletingTest"
+          @save="(id, pw) => saveDatacite('test', id, pw)"
+          @delete="confirmDelete('datacite', 'test')"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { invoke } from '@tauri-apps/api/core'
-import SelectButton from 'primevue/selectbutton'
+import Tag from 'primevue/tag'
 import CredentialSection from '../components/credentials/CredentialSection.vue'
 
 const { t } = useI18n()
 const toast = useToast()
 const confirm = useConfirm()
 
-const env = ref<'prod' | 'test'>('prod')
-const envOptions = computed(() => [
-  { label: t('credentials.prod'), value: 'prod' },
-  { label: t('credentials.test'), value: 'test' },
-])
+// Per-env credential info
+const halInfoProd = ref<{ login: string } | null>(null)
+const halInfoTest = ref<{ login: string } | null>(null)
+const dataciteInfoProd = ref<{ repository_id: string } | null>(null)
+const dataciteInfoTest = ref<{ repository_id: string } | null>(null)
 
-const halInfo = ref<{ login: string } | null>(null)
-const dataciteInfo = ref<{ repository_id: string } | null>(null)
-const halSaving = ref(false)
-const halDeleting = ref(false)
-const dataciteSaving = ref(false)
-const dataciteDeleting = ref(false)
+// Loading states
+const halSavingProd = ref(false)
+const halSavingTest = ref(false)
+const halDeletingProd = ref(false)
+const halDeletingTest = ref(false)
+const dataciteSavingProd = ref(false)
+const dataciteSavingTest = ref(false)
+const dataciteDeletingProd = ref(false)
+const dataciteDeletingTest = ref(false)
 
-const halSectionRef = ref<InstanceType<typeof CredentialSection>>()
-const dataciteSectionRef = ref<InstanceType<typeof CredentialSection>>()
+// Section refs
+const halSectionProdRef = ref<InstanceType<typeof CredentialSection>>()
+const halSectionTestRef = ref<InstanceType<typeof CredentialSection>>()
+const dataciteSectionProdRef = ref<InstanceType<typeof CredentialSection>>()
+const dataciteSectionTestRef = ref<InstanceType<typeof CredentialSection>>()
 
-// Shared action labels (same for both sections)
 const sharedLabels = computed(() => ({
   configuredText: t('credentials.status.configured'),
   notConfiguredText: t('credentials.status.notConfigured'),
@@ -90,47 +114,57 @@ const dataciteSectionProps = computed(() => ({
   passwordLabel: t('credentials.datacite.password'),
 }))
 
-async function load(api: 'hal' | 'datacite') {
+async function load(api: 'hal' | 'datacite', env: 'prod' | 'test') {
   if (api === 'hal') {
-    halInfo.value = (await invoke<{ login: string } | null>('get_hal_credentials', { env: env.value })) ?? null
+    const result = (await invoke<{ login: string } | null>('get_hal_credentials', { env })) ?? null
+    env === 'prod' ? (halInfoProd.value = result) : (halInfoTest.value = result)
   } else {
-    dataciteInfo.value =
-      (await invoke<{ repository_id: string } | null>('get_datacite_credentials', { env: env.value })) ?? null
+    const result =
+      (await invoke<{ repository_id: string } | null>('get_datacite_credentials', { env })) ?? null
+    env === 'prod' ? (dataciteInfoProd.value = result) : (dataciteInfoTest.value = result)
   }
 }
 
-async function saveHal(identifier: string, password: string) {
-  halSaving.value = true
+async function saveHal(env: 'prod' | 'test', identifier: string, password: string) {
+  const savingRef = env === 'prod' ? halSavingProd : halSavingTest
+  const sectionRef = env === 'prod' ? halSectionProdRef : halSectionTestRef
+  savingRef.value = true
   await nextTick()
   try {
-    await invoke('save_hal_credentials', { env: env.value, login: identifier, password })
+    await invoke('save_hal_credentials', { env, login: identifier, password })
     toast.add({ severity: 'success', summary: t('credentials.messages.saveSuccess'), life: 3000 })
-    await load('hal')
-    halSectionRef.value?.resetEditing()
+    await load('hal', env)
+    sectionRef.value?.resetEditing()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('credentials.messages.saveError', { error: String(err) }), life: 5000 })
   } finally {
-    halSaving.value = false
+    savingRef.value = false
   }
 }
 
-async function saveDatacite(identifier: string, password: string) {
-  dataciteSaving.value = true
+async function saveDatacite(env: 'prod' | 'test', identifier: string, password: string) {
+  const savingRef = env === 'prod' ? dataciteSavingProd : dataciteSavingTest
+  const sectionRef = env === 'prod' ? dataciteSectionProdRef : dataciteSectionTestRef
+  savingRef.value = true
   await nextTick()
   try {
-    await invoke('save_datacite_credentials', { env: env.value, repositoryId: identifier, password })
+    await invoke('save_datacite_credentials', { env, repositoryId: identifier, password })
     toast.add({ severity: 'success', summary: t('credentials.messages.saveSuccess'), life: 3000 })
-    await load('datacite')
-    dataciteSectionRef.value?.resetEditing()
+    await load('datacite', env)
+    sectionRef.value?.resetEditing()
   } catch (err) {
     toast.add({ severity: 'error', summary: t('credentials.messages.saveError', { error: String(err) }), life: 5000 })
   } finally {
-    dataciteSaving.value = false
+    savingRef.value = false
   }
 }
 
-function confirmDelete(api: 'hal' | 'datacite') {
-  const deletingRef = api === 'hal' ? halDeleting : dataciteDeleting
+function confirmDelete(api: 'hal' | 'datacite', env: 'prod' | 'test') {
+  const deletingRef =
+    api === 'hal'
+      ? env === 'prod' ? halDeletingProd : halDeletingTest
+      : env === 'prod' ? dataciteDeletingProd : dataciteDeletingTest
+
   confirm.require({
     message: t('credentials.messages.deleteConfirm', { api: api === 'hal' ? 'HAL' : 'DataCite' }),
     header: t('credentials.actions.delete'),
@@ -140,9 +174,9 @@ function confirmDelete(api: 'hal' | 'datacite') {
     accept: async () => {
       deletingRef.value = true
       try {
-        await invoke('delete_credentials', { api, env: env.value })
+        await invoke('delete_credentials', { api, env })
         toast.add({ severity: 'success', summary: t('credentials.messages.deleteSuccess'), life: 3000 })
-        await load(api)
+        await load(api, env)
       } catch (err) {
         toast.add({
           severity: 'error',
@@ -156,5 +190,12 @@ function confirmDelete(api: 'hal' | 'datacite') {
   })
 }
 
-watch(env, () => Promise.all([load('hal'), load('datacite')]), { immediate: true })
+onMounted(() =>
+  Promise.all([
+    load('hal', 'prod'),
+    load('hal', 'test'),
+    load('datacite', 'prod'),
+    load('datacite', 'test'),
+  ]),
+)
 </script>
