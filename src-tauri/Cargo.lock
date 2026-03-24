@@ -1837,7 +1837,7 @@ dependencies = [
 
 [[package]]
 name = "hal2datacite"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "machine-uid",
  "quick-xml 0.37.5",
