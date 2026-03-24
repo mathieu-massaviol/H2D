@@ -50,7 +50,7 @@ import Textarea from 'primevue/textarea'
 import type { BatchDocument } from '../../../../types/batch'
 import { normalizeHalId } from '../../../../utils/hal'
 
-const props = defineProps<{
+defineProps<{
   env: 'prod' | 'test'
   prefix: string
 }>()
