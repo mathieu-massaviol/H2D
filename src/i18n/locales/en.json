@@ -82,11 +82,15 @@
       "noPrefixes": "No prefixes available",
       "credentialsMissing": "DataCite credentials are not configured.",
       "fetchMetadata": "Fetch metadata",
+      "suffixPrefix": "DOI suffix prefix",
+      "suffixPrefixPlaceholder": "e.g. my-institution",
+      "suffixPrefixHint": "Optional. Only lowercase letters, digits and hyphens. Result: {prefix}/{suffix}-XXXXXXXX",
       "errors": {
         "halIdRequired": "Please enter a HAL identifier or URL",
         "prefixRequired": "Please select a DOI prefix",
         "fetchFailed": "Error fetching HAL metadata: {error}",
-        "prefixesFailed": "Error fetching prefixes: {error}"
+        "prefixesFailed": "Error fetching prefixes: {error}",
+        "suffixPrefixInvalid": "Only lowercase letters (a-z), digits (0-9) and hyphens (-) are allowed"
       }
     },
     "step2": {

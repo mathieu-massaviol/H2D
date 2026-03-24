@@ -134,6 +134,7 @@ import { truncate } from '../../../../utils/string'
 const props = defineProps<{
   env: 'prod' | 'test'
   prefix: string
+  suffixPrefix: string
   documents: BatchDocument[]
 }>()
 
@@ -184,6 +185,7 @@ async function startProcessing() {
         prefix: props.prefix,
         env: props.env,
         publish: false,
+        suffixPrefix: props.suffixPrefix,
       })
 
       // Step 2: publish DOI

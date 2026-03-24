@@ -25,6 +25,7 @@
             <ConfigStep
               :env="env"
               :prefix="selectedPrefix"
+              :suffix-prefix="suffixPrefix"
               @next="onStep1Next"
             />
           </StepPanel>
@@ -35,6 +36,7 @@
               v-show="activeStep === '2'"
               :env="env"
               :prefix="selectedPrefix"
+              :suffix-prefix="suffixPrefix"
               :hal-id="halId"
               @next="onStep2Next"
               @back="activeStep = '1'"
@@ -81,14 +83,16 @@ const router = useRouter()
 const activeStep = ref('1')
 const env = ref<'prod' | 'test'>('test')
 const selectedPrefix = ref('')
+const suffixPrefix = ref('')
 const halId = ref('')
 const halUri = ref<string | null>(null)
 const draftDoi = ref('')
 const dataciteMetadata = ref<DataciteMetadata | null>(null)
 
-function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string) {
+function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string, sp: string) {
   env.value = selectedEnv
   selectedPrefix.value = prefix
+  suffixPrefix.value = sp
   activeStep.value = '2'
 }
 

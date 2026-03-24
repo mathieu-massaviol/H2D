@@ -1,5 +1,6 @@
 use crate::credentials::{get_vault_secret, CredentialStore};
 use crate::hal_service::HalMetadata;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use tauri::State;
@@ -401,7 +402,8 @@ fn datacite_base_url(env: &str) -> &'static str {
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct DataciteDoiAttributes {
-    prefix: String,
+    doi: Option<String>,
+    prefix: Option<String>,
     event: Option<String>,
     #[serde(flatten)]
     metadata: DataciteMetadata,
@@ -436,6 +438,7 @@ struct DataciteDoiResponse {
 
 /// Crée un DOI DataCite à partir des métadonnées HAL.
 /// `publish`: `true` → DOI findable immédiatement, `false` → état draft
+/// `suffix_prefix`: préfixe optionnel du suffixe du DOI (ex: "my-lab" → "10.XXXX/my-lab-4a9f82bc")
 #[tauri::command]
 pub async fn create_doi(
     store: State<'_, CredentialStore>,
@@ -443,16 +446,38 @@ pub async fn create_doi(
     prefix: String,
     env: String,
     publish: bool,
+    suffix_prefix: Option<String>,
 ) -> Result<String, String> {
     let (repository_id, password) = fetch_datacite_credentials(&store, env.clone()).await?;
 
     let metadata = map(hal_metadata)?;
 
+    let client = reqwest::Client::new();
+
+    let (doi_attr, prefix_attr) = if let Some(sp) = suffix_prefix.filter(|s| !s.is_empty()) {
+        let mut candidate = None;
+        for _ in 0..3 {
+            let random = format!("{:08x}", rand::thread_rng().gen::<u32>());
+            let full_doi = format!("{}/{}-{}", prefix, sp, random);
+            if !doi_exists(&client, &full_doi, &repository_id, &password, &env).await {
+                candidate = Some(full_doi);
+                break;
+            }
+        }
+        let full_doi = candidate.ok_or_else(|| {
+            "Could not generate a unique DOI suffix after 3 attempts. Please try again.".to_string()
+        })?;
+        (Some(full_doi), None)
+    } else {
+        (None, Some(prefix))
+    };
+
     let request_body = DataciteDoiRequest {
         data: DataciteDoiData {
             data_type: "dois",
             attributes: DataciteDoiAttributes {
-                prefix,
+                doi: doi_attr,
+                prefix: prefix_attr,
                 event: if publish {
                     Some("publish".to_string())
                 } else {
@@ -464,7 +489,6 @@ pub async fn create_doi(
     };
 
     let url = format!("{}/dois", datacite_base_url(&env));
-    let client = reqwest::Client::new();
     let response = client
         .post(&url)
         .basic_auth(&repository_id, Some(&password))
@@ -517,6 +541,27 @@ async fn require_success(response: reqwest::Response) -> Result<reqwest::Respons
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
     Err(format!("DataCite API returned status {status}: {body}"))
+}
+
+/// Vérifie si un DOI existe déjà dans DataCite.
+/// Retourne `true` si le DOI est déjà pris, `false` s'il est disponible (404) ou en cas d'erreur réseau.
+async fn doi_exists(
+    client: &reqwest::Client,
+    doi: &str,
+    repository_id: &str,
+    password: &str,
+    env: &str,
+) -> bool {
+    let url = format!("{}/dois/{}", datacite_base_url(env), doi);
+    match client
+        .get(&url)
+        .basic_auth(repository_id, Some(password))
+        .send()
+        .await
+    {
+        Ok(resp) => resp.status().is_success(),
+        Err(_) => false,
+    }
 }
 
 // ── Structures pour get_datacite_prefixes ──────────────────────────────────

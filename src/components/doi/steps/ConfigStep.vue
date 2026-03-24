@@ -38,6 +38,21 @@
       </small>
     </div>
 
+    <!-- DOI Suffix Prefix -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">{{ t('createDoi.step1.suffixPrefix') }}</label>
+      <InputText
+        v-model="localSuffixPrefix"
+        :placeholder="t('createDoi.step1.suffixPrefixPlaceholder')"
+        :invalid="!!suffixPrefixError"
+        class="w-full"
+      />
+      <small v-if="suffixPrefixError" class="text-red-500">{{ suffixPrefixError }}</small>
+      <small v-else class="text-gray-400">
+        {{ t('createDoi.step1.suffixPrefixHint', { prefix: localPrefix || '10.XXXXX', suffix: localSuffixPrefix || 'your-prefix' }) }}
+      </small>
+    </div>
+
     <div class="flex justify-end pt-2">
       <Button
         :label="t('common.next')"
@@ -56,6 +71,7 @@ import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import SelectButton from 'primevue/selectbutton'
 import Select from 'primevue/select'
@@ -64,10 +80,11 @@ import { RouterLink } from 'vue-router'
 const props = defineProps<{
   env: 'prod' | 'test'
   prefix: string
+  suffixPrefix: string
 }>()
 
 const emit = defineEmits<{
-  next: [env: 'prod' | 'test', prefix: string]
+  next: [env: 'prod' | 'test', prefix: string, suffixPrefix: string]
 }>()
 
 const { t } = useI18n()
@@ -75,9 +92,11 @@ const toast = useToast()
 
 const localEnv = ref<'prod' | 'test'>(props.env)
 const localPrefix = ref(props.prefix || '')
+const localSuffixPrefix = ref(props.suffixPrefix || '')
 const loadingPrefixes = ref(false)
 const prefixes = ref<string[]>([])
 const prefixError = ref('')
+const suffixPrefixError = ref('')
 const credentialsMissing = ref(false)
 
 const envOptions = [
@@ -115,10 +134,15 @@ watch(localEnv, (env) => loadPrefixes(env), { immediate: true })
 
 function submit() {
   prefixError.value = ''
+  suffixPrefixError.value = ''
   if (!localPrefix.value) {
     prefixError.value = t('createDoi.step1.errors.prefixRequired')
     return
   }
-  emit('next', localEnv.value, localPrefix.value)
+  if (localSuffixPrefix.value && !/^[a-z0-9-]+$/.test(localSuffixPrefix.value)) {
+    suffixPrefixError.value = t('createDoi.step1.errors.suffixPrefixInvalid')
+    return
+  }
+  emit('next', localEnv.value, localPrefix.value, localSuffixPrefix.value)
 }
 </script>

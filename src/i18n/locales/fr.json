@@ -82,11 +82,15 @@
       "noPrefixes": "Aucun préfixe disponible",
       "credentialsMissing": "Les identifiants DataCite ne sont pas configurés.",
       "fetchMetadata": "Récupérer les métadonnées",
+      "suffixPrefix": "Préfixe du suffixe DOI",
+      "suffixPrefixPlaceholder": "ex. mon-institution",
+      "suffixPrefixHint": "Facultatif. Uniquement des lettres minuscules, chiffres et tirets. Résultat : {prefix}/{suffix}-XXXXXXXX",
       "errors": {
         "halIdRequired": "Veuillez saisir un identifiant ou une URL HAL",
         "prefixRequired": "Veuillez sélectionner un préfixe DOI",
         "fetchFailed": "Erreur lors de la récupération des métadonnées HAL : {error}",
-        "prefixesFailed": "Erreur lors de la récupération des préfixes : {error}"
+        "prefixesFailed": "Erreur lors de la récupération des préfixes : {error}",
+        "suffixPrefixInvalid": "Seuls les lettres minuscules (a-z), chiffres (0-9) et tirets (-) sont autorisés"
       }
     },
     "step2": {

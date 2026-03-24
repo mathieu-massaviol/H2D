@@ -178,6 +178,7 @@ export interface HalMetadata {
 const props = defineProps<{
   env: 'prod' | 'test'
   prefix: string
+  suffixPrefix: string
   halId: string
 }>()
 
@@ -248,6 +249,7 @@ async function confirmAndCreateDraft() {
         prefix: props.prefix,
         env: props.env,
         publish: false,
+        suffixPrefix: props.suffixPrefix,
       }),
     ])
     emit('next', localHalId.value.trim(), metadata.value, doi, dataciteMetadata)

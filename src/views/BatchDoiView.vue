@@ -24,7 +24,7 @@
 
         <StepPanels>
           <StepPanel value="1" class="pt-6">
-            <ConfigStep :env="env" :prefix="selectedPrefix" @next="onStep1Next" />
+            <ConfigStep :env="env" :prefix="selectedPrefix" :suffix-prefix="suffixPrefix" @next="onStep1Next" />
           </StepPanel>
 
           <StepPanel value="2" class="pt-6">
@@ -53,6 +53,7 @@
               v-if="activeStep === '4'"
               :env="env"
               :prefix="selectedPrefix"
+              :suffix-prefix="suffixPrefix"
               :documents="documents"
               @next="onStep4Next"
             />
@@ -94,11 +95,13 @@ const router = useRouter()
 const activeStep = ref('1')
 const env = ref<'prod' | 'test'>('test')
 const selectedPrefix = ref('')
+const suffixPrefix = ref('')
 const documents = ref<BatchDocument[]>([])
 
-function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string) {
+function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string, sp: string) {
   env.value = selectedEnv
   selectedPrefix.value = prefix
+  suffixPrefix.value = sp
   activeStep.value = '2'
 }
 
