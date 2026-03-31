@@ -70,7 +70,7 @@
       "publish": "Validate & publish"
     },
     "step1": {
-      "title": "Select a HAL document",
+      "title": "Configure DOI",
       "environment": "Environment",
       "prod": "Production",
       "test": "Test",
@@ -94,7 +94,7 @@
       }
     },
     "step2": {
-      "title": "Review HAL metadata",
+      "title": "Select a HAL document",
       "existingDoiWarning": "This document already has a DOI: {doi}",
       "existingDoiError": "This document already has a DOI: {doi}. A new DOI cannot be created.",
       "fields": {
@@ -263,6 +263,11 @@
       "deleteSuccess": "Credentials deleted",
       "deleteError": "Error deleting credentials: {error}",
       "deleteConfirm": "Delete {api} credentials?"
+    },
+    "advanced": {
+      "toggle": "Advanced settings",
+      "envLabel": "API environment",
+      "description": "Test mode uses DataCite and HAL preprod APIs. Intended for developers only."
     }
   }
 }

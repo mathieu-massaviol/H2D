@@ -7,6 +7,31 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- List DOIs -->
+      <Card>
+        <template #title>
+          <span class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
+              <i class="pi pi-table text-primary text-lg" />
+            </span>
+            {{ t('home.doiList.title') }}
+          </span>
+        </template>
+        <template #content>
+          <div class="flex flex-col gap-4">
+            <p class="text-gray-500 text-sm leading-relaxed">
+              {{ t('home.doiList.description') }}
+            </p>
+            <Button
+              :label="t('home.doiList.title')"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              @click="router.push('/doi-list')"
+            />
+          </div>
+        </template>
+      </Card>
+
       <!-- Create single DOI -->
       <Card>
         <template #title>
@@ -27,31 +52,6 @@
               icon="pi pi-arrow-right"
               iconPos="right"
               @click="router.push('/create-doi')"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- List DOIs -->
-      <Card>
-        <template #title>
-          <span class="flex items-center gap-3">
-            <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
-              <i class="pi pi-table text-primary text-lg" />
-            </span>
-            {{ t('home.doiList.title') }}
-          </span>
-        </template>
-        <template #content>
-          <div class="flex flex-col gap-4">
-            <p class="text-gray-500 text-sm leading-relaxed">
-              {{ t('home.doiList.description') }}
-            </p>
-            <Button
-              :label="t('home.doiList.title')"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              @click="router.push('/doi-list')"
             />
           </div>
         </template>

@@ -2,18 +2,6 @@
   <div class="flex flex-col gap-4 max-w-xl mx-auto pb-4 px-4">
     <h2 class="text-lg font-semibold text-gray-900">{{ t('createDoi.step1.title') }}</h2>
 
-    <!-- Environment -->
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">{{ t('createDoi.step1.environment') }}</label>
-      <SelectButton
-        v-model="localEnv"
-        :options="envOptions"
-        optionLabel="label"
-        optionValue="value"
-        :allowEmpty="false"
-      />
-    </div>
-
     <!-- Credentials missing warning -->
     <Message v-if="credentialsMissing" severity="warn" :closable="false">
       {{ t('createDoi.step1.credentialsMissing') }}
@@ -73,24 +61,23 @@ import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
-import SelectButton from 'primevue/selectbutton'
 import Select from 'primevue/select'
 import { RouterLink } from 'vue-router'
+import { useEnv } from '../../../composables/useEnv'
 
 const props = defineProps<{
-  env: 'prod' | 'test'
   prefix: string
   suffixPrefix: string
 }>()
 
 const emit = defineEmits<{
-  next: [env: 'prod' | 'test', prefix: string, suffixPrefix: string]
+  next: [prefix: string, suffixPrefix: string]
 }>()
 
 const { t } = useI18n()
 const toast = useToast()
+const { env } = useEnv()
 
-const localEnv = ref<'prod' | 'test'>(props.env)
 const localPrefix = ref(props.prefix || '')
 const localSuffixPrefix = ref(props.suffixPrefix || '')
 const loadingPrefixes = ref(false)
@@ -98,11 +85,6 @@ const prefixes = ref<string[]>([])
 const prefixError = ref('')
 const suffixPrefixError = ref('')
 const credentialsMissing = ref(false)
-
-const envOptions = [
-  { label: t('createDoi.step1.test'), value: 'test' },
-  { label: t('createDoi.step1.prod'), value: 'prod' },
-]
 
 async function loadPrefixes(env: 'prod' | 'test') {
   loadingPrefixes.value = true
@@ -130,7 +112,7 @@ async function loadPrefixes(env: 'prod' | 'test') {
   }
 }
 
-watch(localEnv, (env) => loadPrefixes(env), { immediate: true })
+watch(env, (e) => loadPrefixes(e), { immediate: true })
 
 function submit() {
   prefixError.value = ''
@@ -143,6 +125,6 @@ function submit() {
     suffixPrefixError.value = t('createDoi.step1.errors.suffixPrefixInvalid')
     return
   }
-  emit('next', localEnv.value, localPrefix.value, localSuffixPrefix.value)
+  emit('next', localPrefix.value, localSuffixPrefix.value)
 }
 </script>

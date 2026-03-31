@@ -1,57 +1,82 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-page-y px-page-x space-y-6">
+  <div class="min-h-screen bg-gray-50 py-page-y px-page-x">
+    <div class="max-w-xl mx-auto space-y-6">
     <h1 class="text-2xl font-bold text-gray-900">{{ t('credentials.title') }}</h1>
 
-    <div class="flex flex-col lg:flex-row gap-6">
-      <!-- Production column -->
-      <div class="flex-1 space-y-4">
-        <h2 class="font-semibold text-gray-700 flex items-center gap-2">
-          <Tag :value="t('credentials.prod')" severity="danger" />
-        </h2>
-        <CredentialSection
-          ref="halSectionProdRef"
-          v-bind="halSectionProps"
-          :display-value="halInfoProd?.login ?? null"
-          :saving="halSavingProd"
-          :deleting="halDeletingProd"
-          @save="(id, pw) => saveHal('prod', id, pw)"
-          @delete="confirmDelete('hal', 'prod')"
-        />
-        <CredentialSection
-          ref="dataciteSectionProdRef"
-          v-bind="dataciteSectionProps"
-          :display-value="dataciteInfoProd?.repository_id ?? null"
-          :saving="dataciteSavingProd"
-          :deleting="dataciteDeletingProd"
-          @save="(id, pw) => saveDatacite('prod', id, pw)"
-          @delete="confirmDelete('datacite', 'prod')"
-        />
-      </div>
+    <!-- Production credentials -->
+    <div class="space-y-4">
+      <CredentialSection
+        ref="halSectionProdRef"
+        v-bind="halSectionProps"
+        :display-value="halInfoProd?.login ?? null"
+        :saving="halSavingProd"
+        :deleting="halDeletingProd"
+        @save="(id, pw) => saveHal('prod', id, pw)"
+        @delete="confirmDelete('hal', 'prod')"
+      />
+      <CredentialSection
+        ref="dataciteSectionProdRef"
+        v-bind="dataciteSectionProps"
+        :display-value="dataciteInfoProd?.repository_id ?? null"
+        :saving="dataciteSavingProd"
+        :deleting="dataciteDeletingProd"
+        @save="(id, pw) => saveDatacite('prod', id, pw)"
+        @delete="confirmDelete('datacite', 'prod')"
+      />
+    </div>
 
-      <!-- Test column -->
-      <div class="flex-1 space-y-4">
-        <h2 class="font-semibold text-gray-700 flex items-center gap-2">
-          <Tag :value="t('credentials.test')" severity="secondary" />
-        </h2>
-        <CredentialSection
-          ref="halSectionTestRef"
-          v-bind="halSectionProps"
-          :display-value="halInfoTest?.login ?? null"
-          :saving="halSavingTest"
-          :deleting="halDeletingTest"
-          @save="(id, pw) => saveHal('test', id, pw)"
-          @delete="confirmDelete('hal', 'test')"
-        />
-        <CredentialSection
-          ref="dataciteSectionTestRef"
-          v-bind="dataciteSectionProps"
-          :display-value="dataciteInfoTest?.repository_id ?? null"
-          :saving="dataciteSavingTest"
-          :deleting="dataciteDeletingTest"
-          @save="(id, pw) => saveDatacite('test', id, pw)"
-          @delete="confirmDelete('datacite', 'test')"
-        />
+    <!-- Advanced settings -->
+    <div class="border-t border-gray-200 pt-6">
+      <button
+        type="button"
+        class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+        @click="showAdvanced = !showAdvanced"
+      >
+        <i :class="showAdvanced ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="text-xs" />
+        {{ t('credentials.advanced.toggle') }}
+      </button>
+
+      <div v-if="showAdvanced" class="mt-4 space-y-6">
+        <p class="text-xs text-gray-400">{{ t('credentials.advanced.description') }}</p>
+
+        <!-- API environment selector -->
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">{{ t('credentials.advanced.envLabel') }}</label>
+          <SelectButton
+            v-model="env"
+            :options="envOptions"
+            optionLabel="label"
+            optionValue="value"
+            :allowEmpty="false"
+          />
+        </div>
+
+        <!-- Test credentials -->
+        <div class="space-y-4">
+          <h2 class="font-semibold text-gray-700 flex items-center gap-2">
+            <Tag :value="t('credentials.test')" severity="secondary" />
+          </h2>
+          <CredentialSection
+            ref="halSectionTestRef"
+            v-bind="halSectionProps"
+            :display-value="halInfoTest?.login ?? null"
+            :saving="halSavingTest"
+            :deleting="halDeletingTest"
+            @save="(id, pw) => saveHal('test', id, pw)"
+            @delete="confirmDelete('hal', 'test')"
+          />
+          <CredentialSection
+            ref="dataciteSectionTestRef"
+            v-bind="dataciteSectionProps"
+            :display-value="dataciteInfoTest?.repository_id ?? null"
+            :saving="dataciteSavingTest"
+            :deleting="dataciteDeletingTest"
+            @save="(id, pw) => saveDatacite('test', id, pw)"
+            @delete="confirmDelete('datacite', 'test')"
+          />
+        </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
@@ -63,11 +88,19 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { invoke } from '@tauri-apps/api/core'
 import Tag from 'primevue/tag'
+import SelectButton from 'primevue/selectbutton'
 import CredentialSection from '../components/credentials/CredentialSection.vue'
+import { useEnv } from '../composables/useEnv'
 
 const { t } = useI18n()
 const toast = useToast()
 const confirm = useConfirm()
+const { env } = useEnv()
+const showAdvanced = ref(false)
+const envOptions = [
+  { label: t('credentials.prod'), value: 'prod' },
+  { label: t('credentials.test'), value: 'test' },
+]
 
 // Per-env credential info
 const halInfoProd = ref<{ login: string } | null>(null)

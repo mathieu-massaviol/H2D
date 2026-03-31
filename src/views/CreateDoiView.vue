@@ -23,7 +23,6 @@
         <StepPanels>
           <StepPanel value="1" class="pt-6">
             <ConfigStep
-              :env="env"
               :prefix="selectedPrefix"
               :suffix-prefix="suffixPrefix"
               @next="onStep1Next"
@@ -65,6 +64,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useEnv } from '../composables/useEnv'
 import Stepper from 'primevue/stepper'
 import StepList from 'primevue/steplist'
 import Step from 'primevue/step'
@@ -81,7 +81,7 @@ const { t } = useI18n()
 const router = useRouter()
 
 const activeStep = ref('1')
-const env = ref<'prod' | 'test'>('test')
+const { env } = useEnv()
 const selectedPrefix = ref('')
 const suffixPrefix = ref('')
 const halId = ref('')
@@ -89,8 +89,7 @@ const halUri = ref<string | null>(null)
 const draftDoi = ref('')
 const dataciteMetadata = ref<DataciteMetadata | null>(null)
 
-function onStep1Next(selectedEnv: 'prod' | 'test', prefix: string, sp: string) {
-  env.value = selectedEnv
+function onStep1Next(prefix: string, sp: string) {
   selectedPrefix.value = prefix
   suffixPrefix.value = sp
   activeStep.value = '2'

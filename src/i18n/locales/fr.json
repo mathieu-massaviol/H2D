@@ -70,7 +70,7 @@
       "publish": "Valider et publier"
     },
     "step1": {
-      "title": "Configurer l'environnement",
+      "title": "Configurer le DOI",
       "environment": "Environnement",
       "prod": "Production",
       "test": "Test",
@@ -94,7 +94,7 @@
       }
     },
     "step2": {
-      "title": "Vérification des métadonnées HAL",
+      "title": "Sélectionner un document HAL",
       "existingDoiWarning": "Ce document possède déjà un DOI : {doi}",
       "existingDoiError": "Ce document possède déjà un DOI : {doi}. Il n'est pas possible de créer un nouveau DOI.",
       "fields": {
@@ -263,6 +263,11 @@
       "deleteSuccess": "Identifiants supprimés",
       "deleteError": "Erreur lors de la suppression : {error}",
       "deleteConfirm": "Supprimer les identifiants {api} ?"
+    },
+    "advanced": {
+      "toggle": "Paramètres avancés",
+      "envLabel": "Environnement API",
+      "description": "Le mode test utilise les APIs de pré-production DataCite et HAL. Réservé aux développeurs."
     }
   }
 }

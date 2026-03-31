@@ -15,17 +15,7 @@
       </div>
 
       <!-- Controls -->
-      <div class="flex flex-wrap items-end gap-4">
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700">{{ t('doiList.environment') }}</label>
-          <SelectButton
-            v-model="env"
-            :options="envOptions"
-            optionLabel="label"
-            optionValue="value"
-            :allowEmpty="false"
-          />
-        </div>
+      <div>
         <Button
           :label="t('doiList.fetch')"
           icon="pi pi-refresh"
@@ -130,8 +120,8 @@ import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { useToast } from 'primevue/usetoast'
+import { useEnv } from '../composables/useEnv'
 import Button from 'primevue/button'
-import SelectButton from 'primevue/selectbutton'
 import Message from 'primevue/message'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -162,7 +152,7 @@ const { t } = useI18n()
 const router = useRouter()
 const toast = useToast()
 
-const env = ref<'prod' | 'test'>('test')
+const { env } = useEnv()
 const loading = ref(false)
 const error = ref('')
 const fetched = ref(false)
@@ -172,11 +162,6 @@ const meta = ref<DoiListMeta>({ total: 0, totalPages: 0, page: 1 })
 // doi → true (synced) | false (not synced) | 'loading' | undefined (check failed / not applicable)
 const halSyncMap = ref<Record<string, boolean | 'loading'>>({})
 const syncingDoi = ref<string | null>(null)
-
-const envOptions = [
-  { label: t('doiList.test'), value: 'test' },
-  { label: t('doiList.prod'), value: 'prod' },
-]
 
 async function fetchDois(page: number) {
   loading.value = true
