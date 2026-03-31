@@ -74,7 +74,6 @@ struct HalDoc {
     authFirstName_s: Option<Vec<String>>,
     authLastName_s: Option<Vec<String>>,
     authORCIDIdExt_s: Option<Vec<String>>,
-    authQuality_s: Option<Vec<String>>,
     publicationDate_s: Option<String>,
     docType_s: Option<String>,
     abstract_s: Option<Vec<String>>,
@@ -124,7 +123,7 @@ pub struct HalMetadata {
 // ── Champs demandés à l'API HAL ───────────────────────────────────────────
 
 const HAL_FIELDS: &str = "halId_s,title_s,*_title_s,\
-    authFullName_s,authFirstName_s,authLastName_s,authORCIDIdExt_s,authQuality_s,authIdHasStructure_fs,\
+    authFullName_s,authFirstName_s,authLastName_s,authORCIDIdExt_s,authIdHasStructure_fs,\
     publicationDate_s,docType_s,abstract_s,*_abstract_s,keyword_s,*_keyword_s,language_s,\
     doiId_s,uri_s,licence_s,\
     anrProjectTitle_s,anrProjectReference_s";
@@ -159,7 +158,6 @@ fn build_metadata(hal_id: String, doc: HalDoc) -> HalMetadata {
     let first_names = doc.authFirstName_s.unwrap_or_default();
     let last_names = doc.authLastName_s.unwrap_or_default();
     let orcids = doc.authORCIDIdExt_s.unwrap_or_default();
-    let qualities = doc.authQuality_s.unwrap_or_default();
     let affiliations_by_author =
         parse_affiliations_by_author(doc.authIdHasStructure_fs.unwrap_or_default());
 
@@ -189,18 +187,9 @@ fn build_metadata(hal_id: String, doc: HalDoc) -> HalMetadata {
         }
     }
 
-    // Ne conserver que les auteurs (quality "aut"), ou tous si les qualités sont absentes
-    let has_qualities = !qualities.is_empty();
     let authors: Vec<HalAuthor> = full_names
         .into_iter()
         .enumerate()
-        .filter(|(i, _)| {
-            if has_qualities {
-                qualities.get(*i).map(|q| q == "aut").unwrap_or(true)
-            } else {
-                true
-            }
-        })
         .map(|(i, full_name)| {
             let affiliations = affiliations_by_author
                 .get(&full_name)

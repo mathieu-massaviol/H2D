@@ -950,7 +950,7 @@ mod tests {
     #[test]
     #[ignore]
     fn hal_to_datacite() {
-        let hal_id = std::env::var("HAL_ID").unwrap_or_else(|_| "hal-03720513v1".to_string());
+        let hal_id = std::env::var("HAL_ID").unwrap_or_else(|_| "hal-05422868".to_string());
         let _prefix = std::env::var("DOI_PREFIX").unwrap_or_else(|_| "10.xxxx".to_string());
 
         let rt = tokio::runtime::Builder::new_current_thread()
