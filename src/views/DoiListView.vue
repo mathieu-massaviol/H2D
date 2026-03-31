@@ -223,7 +223,10 @@ async function addToHal(row: DoiListItem) {
   } catch (err) {
     toast.add({
       severity: 'error',
-      summary: t('doiList.halSync.addFailed', { error: String(err) }),
+      summary:
+        String(err) === 'HAL_NO_WRITE_ACCESS'
+          ? t('doiList.halSync.noWriteAccess')
+          : t('doiList.halSync.addFailed', { error: String(err) }),
       life: 8000,
     })
   } finally {

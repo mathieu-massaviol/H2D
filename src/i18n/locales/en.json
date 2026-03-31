@@ -51,7 +51,8 @@
       "notSynced": "Not synced",
       "addToHal": "Add to HAL",
       "addSuccess": "DOI successfully added to HAL",
-      "addFailed": "Error adding DOI to HAL: {error}"
+      "addFailed": "Error adding DOI to HAL: {error}",
+      "noWriteAccess": "You do not have write access to this HAL document. Make sure you are listed as an author or have been granted deposit rights."
     },
     "states": {
       "findable": "Findable",
@@ -146,7 +147,8 @@
       "halUpdateFailedDetailed": "The DOI was published on DataCite but could not be added to the HAL record. You can retry this from the DOI list.",
       "errors": {
         "publishFailed": "Error publishing DOI: {error}",
-        "halUpdateFailed": "Error updating HAL record: {error}"
+        "halUpdateFailed": "Error updating HAL record: {error}",
+        "halNoWriteAccess": "You do not have write access to this HAL document. Make sure you are listed as an author or have been granted deposit rights."
       }
     }
   },
@@ -212,6 +214,7 @@
       "exportSuccess": "CSV file saved successfully",
       "exportError": "Error saving CSV: {error}",
       "halSyncFailed": "HAL sync failed",
+      "halNoWriteAccess": "You do not have write access to this HAL document. Make sure you are listed as an author or have been granted deposit rights.",
       "columns": {
         "halId": "HAL ID",
         "doi": "DOI",

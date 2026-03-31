@@ -233,7 +233,10 @@ async function publish() {
   try {
     await invoke('add_doi_to_hal_record', { halId: props.halId, doi: props.draftDoi, env: props.env })
   } catch (err) {
-    halError.value = t('createDoi.step4.errors.halUpdateFailed', { error: String(err) })
+    halError.value =
+      String(err) === 'HAL_NO_WRITE_ACCESS'
+        ? t('createDoi.step4.errors.halNoWriteAccess')
+        : t('createDoi.step4.errors.halUpdateFailed', { error: String(err) })
   }
   publishing.value = false
   done.value = true

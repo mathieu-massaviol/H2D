@@ -51,7 +51,8 @@
       "notSynced": "Non synchronisé",
       "addToHal": "Ajouter à HAL",
       "addSuccess": "DOI ajouté à HAL avec succès",
-      "addFailed": "Erreur lors de l'ajout du DOI à HAL : {error}"
+      "addFailed": "Erreur lors de l'ajout du DOI à HAL : {error}",
+      "noWriteAccess": "Vous n'avez pas les droits d'écriture sur ce document HAL. Assurez-vous d'être listé comme auteur ou dépositaire."
     },
     "states": {
       "findable": "Trouvable",
@@ -146,7 +147,8 @@
       "halUpdateFailedDetailed": "Le DOI a été publié sur DataCite mais n'a pas pu être ajouté à la fiche HAL. Vous pouvez réessayer depuis la liste des DOIs.",
       "errors": {
         "publishFailed": "Erreur lors de la publication du DOI : {error}",
-        "halUpdateFailed": "Erreur lors de la mise à jour de la fiche HAL : {error}"
+        "halUpdateFailed": "Erreur lors de la mise à jour de la fiche HAL : {error}",
+        "halNoWriteAccess": "Vous n'avez pas les droits d'écriture sur ce document HAL. Assurez-vous d'être listé comme auteur ou dépositaire."
       }
     }
   },
@@ -212,6 +214,7 @@
       "exportSuccess": "Fichier CSV enregistré avec succès",
       "exportError": "Erreur lors de l'enregistrement du CSV : {error}",
       "halSyncFailed": "sync HAL échouée",
+      "halNoWriteAccess": "Vous n'avez pas les droits d'écriture sur ce document HAL. Assurez-vous d'être listé comme auteur ou dépositaire.",
       "columns": {
         "halId": "Identifiant HAL",
         "doi": "DOI",

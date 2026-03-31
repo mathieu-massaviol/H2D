@@ -422,6 +422,14 @@ pub async fn add_doi_to_hal_record(
 
     match response.status().as_u16() {
         200 | 201 => Ok(()),
+        400 => {
+            let body = response.text().await.unwrap_or_default();
+            if body.contains("Paper Id can not be updated") {
+                Err("HAL_NO_WRITE_ACCESS".to_string())
+            } else {
+                Err(format!("HAL SWORD returned status 400: {body}"))
+            }
+        }
         401 => Err("HAL authentication failed: invalid credentials".to_string()),
         403 => Err("HAL authorization failed: insufficient permissions".to_string()),
         404 => Err(format!("HAL record not found: {normalized}")),

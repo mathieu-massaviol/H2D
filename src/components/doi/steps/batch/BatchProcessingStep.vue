@@ -201,7 +201,10 @@ async function startProcessing() {
         doc.halSynced = true
       } catch (halErr) {
         doc.halSynced = false
-        doc.processError = String(halErr)
+        doc.processError =
+          String(halErr) === 'HAL_NO_WRITE_ACCESS'
+            ? t('batchDoi.step5.halNoWriteAccess')
+            : String(halErr)
       }
 
       doc.status = 'success'
