@@ -29,15 +29,15 @@ pub fn run() {
             let vault_path = app
                 .path()
                 .app_data_dir()
-                .expect("could not resolve app data dir")
+                .map_err(|e| format!("could not resolve app data dir: {e}"))?
                 .join("credentials.hold");
             let vault =
-                Stronghold::new(&vault_path, key).expect("failed to initialize vault");
+                Stronghold::new(&vault_path, key).map_err(|e| format!("failed to initialize vault: {e}"))?;
             if vault.load_client(CLIENT_NAME).is_err() {
                 vault
                     .create_client(CLIENT_NAME)
-                    .expect("failed to create stronghold client");
-                vault.save().expect("failed to save vault");
+                    .map_err(|e| format!("failed to create stronghold client: {e}"))?;
+                vault.save().map_err(|e| format!("failed to save vault: {e}"))?;
             }
             app.manage(CredentialStore(Arc::new(Mutex::new(vault))));
             Ok(())
