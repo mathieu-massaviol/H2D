@@ -12,9 +12,8 @@
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
     "@tailwindcss/vite": "^4.2.1",
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2.5.3",
-    "@tauri-apps/plugin-stronghold": "^2.3.1",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-opener": "^2.7.2",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
     "tailwindcss": "^4.2.1",
