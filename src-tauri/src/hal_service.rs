@@ -288,7 +288,7 @@ fn insert_doi_in_tei(tei_xml: &str, doi: &str) -> Result<String, String> {
         match reader.read_event() {
             Ok(Event::Start(e)) => {
                 let local = e.local_name();
-                let name_str = std::str::from_utf8(local.as_ref()).unwrap_or("");
+                let name_str: &str = local.as_ref();
 
                 if !in_bib_struct && name_str == "biblStruct" {
                     in_bib_struct = true;
@@ -308,7 +308,7 @@ fn insert_doi_in_tei(tei_xml: &str, doi: &str) -> Result<String, String> {
             }
             Ok(Event::End(e)) => {
                 let local = e.local_name();
-                let name_str = std::str::from_utf8(local.as_ref()).unwrap_or("");
+                let name_str: &str = local.as_ref();
 
                 if in_bib_struct && name_str == "biblStruct" && depth_in_bib_struct == 0 {
                     // Fermeture de <biblStruct> : insérer le DOI s'il ne l'a pas encore été
@@ -326,7 +326,7 @@ fn insert_doi_in_tei(tei_xml: &str, doi: &str) -> Result<String, String> {
             }
             Ok(Event::Empty(e)) => {
                 let local = e.local_name();
-                let name_str = std::str::from_utf8(local.as_ref()).unwrap_or("");
+                let name_str: &str = local.as_ref();
                 // Cas d'un <ref/> auto-fermant direct dans <biblStruct>
                 if in_bib_struct && depth_in_bib_struct == 0 && name_str == "ref" && !doi_inserted {
                     write_idno_doi(&mut writer, doi).map_err(|e| e.to_string())?;
@@ -372,11 +372,11 @@ pub async fn add_doi_to_hal_record(
     let store_arc = store.0.clone();
     let env_clone = env.clone();
     let (login, password) = tauri::async_runtime::spawn_blocking(move || {
-        let vault = store_arc.lock().map_err(|e| e.to_string())?;
-        let login = get_hal_creds_inner(&vault, &env_clone)?
+        let vault = store_arc.as_ref();
+        let login = get_hal_creds_inner(vault, &env_clone)?
             .ok_or_else(|| "HAL credentials not configured".to_string())?
             .login;
-        let password = get_vault_secret(&vault, "hal", &env_clone, "password")?;
+        let password = get_vault_secret(vault, "hal", &env_clone, "password")?;
         Ok::<(String, String), String>((login, password))
     })
     .await

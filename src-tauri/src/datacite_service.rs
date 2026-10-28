@@ -525,9 +525,9 @@ async fn fetch_datacite_credentials(
 ) -> Result<(String, String), String> {
     let store_arc = store.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let vault = store_arc.lock().map_err(|e| e.to_string())?;
-        let repository_id = get_vault_secret(&vault, "datacite", &env, "repository_id")?;
-        let password = get_vault_secret(&vault, "datacite", &env, "password")?;
+        let vault = store_arc.as_ref();
+        let repository_id = get_vault_secret(vault, "datacite", &env, "repository_id")?;
+        let password = get_vault_secret(vault, "datacite", &env, "password")?;
         Ok::<(String, String), String>((repository_id, password))
     })
     .await
