@@ -1,11 +1,11 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use keyring_core::{CredentialStore as KeyringStore, Error as KeyringError};
 use tauri::State;
-use tauri_plugin_stronghold::stronghold::Stronghold;
 
-const CLIENT_NAME: &[u8] = b"hal2datacite";
+const SERVICE: &str = "hal2datacite";
 
-pub struct CredentialStore(pub Arc<Mutex<Stronghold>>);
+pub struct CredentialStore(pub Arc<KeyringStore>);
 
 pub(crate) fn store_key(api: &str, env: &str, field: &str) -> String {
     format!("{api}_{env}_{field}")
@@ -30,115 +30,107 @@ pub struct DataciteCredentialInfo {
     pub(crate) repository_id: String,
 }
 
-/// Reads a single secret from the vault. Returns `Err` if the key is absent or not valid UTF-8.
+/// Reads a single secret from the OS credential store. Returns `Err` if the key is absent.
 pub(crate) fn get_vault_secret(
-    vault: &Stronghold,
+    vault: &KeyringStore,
     api: &str,
     env: &str,
     field: &str,
 ) -> Result<String, String> {
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    client
-        .store()
-        .get(store_key(api, env, field).as_ref())
+    let entry = vault
+        .build(SERVICE, &store_key(api, env, field), None)
+        .map_err(|e| e.to_string())?;
+    match entry.get_password() {
+        Ok(value) => Ok(value),
+        Err(KeyringError::NoEntry) => Err(format!("{api} {field} not configured")),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+/// Reads an optional secret from the OS credential store. Returns `Ok(None)` if the key is absent.
+fn get_optional_vault_secret(
+    vault: &KeyringStore,
+    api: &str,
+    env: &str,
+    field: &str,
+) -> Result<Option<String>, String> {
+    let entry = vault
+        .build(SERVICE, &store_key(api, env, field), None)
+        .map_err(|e| e.to_string())?;
+    match entry.get_password() {
+        Ok(value) => Ok(Some(value)),
+        Err(KeyringError::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn set_vault_secret(
+    vault: &KeyringStore,
+    api: &str,
+    env: &str,
+    field: &str,
+    value: &str,
+) -> Result<(), String> {
+    vault
+        .build(SERVICE, &store_key(api, env, field), None)
         .map_err(|e| e.to_string())?
-        .and_then(|b| String::from_utf8(b).ok())
-        .ok_or_else(|| format!("{api} {field} not configured"))
+        .set_password(value)
+        .map_err(|e| e.to_string())
 }
 
 pub(crate) fn save_hal_creds_inner(
-    vault: &Stronghold,
+    vault: &KeyringStore,
     env: &str,
     login: String,
     password: String,
 ) -> Result<(), String> {
     validate_env(env)?;
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    let s = client.store();
-    s.insert(
-        store_key("hal", env, "login").into_bytes(),
-        login.into_bytes(),
-        None,
-    )
-    .map_err(|e| e.to_string())?;
-    s.insert(
-        store_key("hal", env, "password").into_bytes(),
-        password.into_bytes(),
-        None,
-    )
-    .map_err(|e| e.to_string())?;
-    vault.save().map_err(|e| e.to_string())
+    set_vault_secret(vault, "hal", env, "login", &login)?;
+    set_vault_secret(vault, "hal", env, "password", &password)
 }
 
 pub(crate) fn save_datacite_creds_inner(
-    vault: &Stronghold,
+    vault: &KeyringStore,
     env: &str,
     repository_id: String,
     password: String,
 ) -> Result<(), String> {
     validate_env(env)?;
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    let s = client.store();
-    s.insert(
-        store_key("datacite", env, "repository_id").into_bytes(),
-        repository_id.into_bytes(),
-        None,
-    )
-    .map_err(|e| e.to_string())?;
-    s.insert(
-        store_key("datacite", env, "password").into_bytes(),
-        password.into_bytes(),
-        None,
-    )
-    .map_err(|e| e.to_string())?;
-    vault.save().map_err(|e| e.to_string())
+    set_vault_secret(vault, "datacite", env, "repository_id", &repository_id)?;
+    set_vault_secret(vault, "datacite", env, "password", &password)
 }
 
 pub(crate) fn get_hal_creds_inner(
-    vault: &Stronghold,
+    vault: &KeyringStore,
     env: &str,
 ) -> Result<Option<HalCredentialInfo>, String> {
     validate_env(env)?;
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    let s = client.store();
-    let login = s
-        .get(store_key("hal", env, "login").as_ref())
-        .map_err(|e| e.to_string())?
-        .and_then(|b| String::from_utf8(b).ok());
+    let login = get_optional_vault_secret(vault, "hal", env, "login")?;
     Ok(login.map(|login| HalCredentialInfo { login }))
 }
 
 pub(crate) fn get_datacite_creds_inner(
-    vault: &Stronghold,
+    vault: &KeyringStore,
     env: &str,
 ) -> Result<Option<DataciteCredentialInfo>, String> {
     validate_env(env)?;
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    let s = client.store();
-    let repository_id = s
-        .get(store_key("datacite", env, "repository_id").as_ref())
-        .map_err(|e| e.to_string())?
-        .and_then(|b| String::from_utf8(b).ok());
+    let repository_id = get_optional_vault_secret(vault, "datacite", env, "repository_id")?;
     Ok(repository_id.map(|repository_id| DataciteCredentialInfo { repository_id }))
 }
 
-pub(crate) fn delete_creds_inner(
-    vault: &Stronghold,
-    api: &str,
-    env: &str,
-) -> Result<(), String> {
+pub(crate) fn delete_creds_inner(vault: &KeyringStore, api: &str, env: &str) -> Result<(), String> {
     validate_env(env)?;
-    let client = vault.get_client(CLIENT_NAME).map_err(|e| e.to_string())?;
-    let s = client.store();
     let fields: &[&str] = match api {
         "hal" => &["login", "password"],
         "datacite" => &["repository_id", "password"],
         other => return Err(format!("unknown api: {other}")),
     };
     for field in fields {
-        let _ = s.delete(store_key(api, env, field).as_ref());
+        if let Ok(entry) = vault.build(SERVICE, &store_key(api, env, field), None) {
+            let _ = entry.delete_credential();
+        }
     }
-    vault.save().map_err(|e| e.to_string())
+    Ok(())
 }
 
 #[tauri::command]
@@ -148,10 +140,9 @@ pub async fn save_hal_credentials(
     login: String,
     password: String,
 ) -> Result<(), String> {
-    let store = store.0.clone();
+    let vault = store.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let vault = store.lock().map_err(|e| e.to_string())?;
-        save_hal_creds_inner(&vault, &env, login, password)
+        save_hal_creds_inner(vault.as_ref(), &env, login, password)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -164,10 +155,9 @@ pub async fn save_datacite_credentials(
     repository_id: String,
     password: String,
 ) -> Result<(), String> {
-    let store = store.0.clone();
+    let vault = store.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let vault = store.lock().map_err(|e| e.to_string())?;
-        save_datacite_creds_inner(&vault, &env, repository_id, password)
+        save_datacite_creds_inner(vault.as_ref(), &env, repository_id, password)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -180,13 +170,10 @@ pub async fn get_hal_credentials(
     store: State<'_, CredentialStore>,
     env: String,
 ) -> Result<Option<HalCredentialInfo>, String> {
-    let store = store.0.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let vault = store.lock().map_err(|e| e.to_string())?;
-        get_hal_creds_inner(&vault, &env)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    let vault = store.0.clone();
+    tauri::async_runtime::spawn_blocking(move || get_hal_creds_inner(vault.as_ref(), &env))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 /// Returns the DataCite repository_id (non-sensitive) if credentials are stored, None otherwise.
@@ -196,13 +183,10 @@ pub async fn get_datacite_credentials(
     store: State<'_, CredentialStore>,
     env: String,
 ) -> Result<Option<DataciteCredentialInfo>, String> {
-    let store = store.0.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let vault = store.lock().map_err(|e| e.to_string())?;
-        get_datacite_creds_inner(&vault, &env)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    let vault = store.0.clone();
+    tauri::async_runtime::spawn_blocking(move || get_datacite_creds_inner(vault.as_ref(), &env))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -211,30 +195,18 @@ pub async fn delete_credentials(
     api: String,
     env: String,
 ) -> Result<(), String> {
-    let store = store.0.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let vault = store.lock().map_err(|e| e.to_string())?;
-        delete_creds_inner(&vault, &api, &env)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    let vault = store.0.clone();
+    tauri::async_runtime::spawn_blocking(move || delete_creds_inner(vault.as_ref(), &api, &env))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
-    fn setup_vault() -> (TempDir, Stronghold) {
-        let dir = TempDir::new().expect("failed to create temp dir");
-        let path = dir.path().join("test.hold");
-        let key = vec![0u8; 32];
-        let vault = Stronghold::new(&path, key).expect("failed to create vault");
-        vault
-            .create_client(CLIENT_NAME)
-            .expect("failed to create client");
-        vault.save().expect("failed to save vault");
-        (dir, vault)
+    fn setup_vault() -> Arc<KeyringStore> {
+        keyring_core::mock::Store::new().expect("failed to create mock credential store")
     }
 
     #[test]
@@ -248,9 +220,9 @@ mod tests {
 
     #[test]
     fn test_save_and_get_hal_credentials_prod() {
-        let (_dir, vault) = setup_vault();
-        save_hal_creds_inner(&vault, "prod", "alice".into(), "secret".into()).unwrap();
-        let result = get_hal_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "prod", "alice".into(), "secret".into()).unwrap();
+        let result = get_hal_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(
             result,
             Some(HalCredentialInfo {
@@ -261,9 +233,9 @@ mod tests {
 
     #[test]
     fn test_save_and_get_hal_credentials_test_env() {
-        let (_dir, vault) = setup_vault();
-        save_hal_creds_inner(&vault, "test", "bob".into(), "pw".into()).unwrap();
-        let result = get_hal_creds_inner(&vault, "test").unwrap();
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "test", "bob".into(), "pw".into()).unwrap();
+        let result = get_hal_creds_inner(vault.as_ref(), "test").unwrap();
         assert_eq!(
             result,
             Some(HalCredentialInfo {
@@ -274,17 +246,17 @@ mod tests {
 
     #[test]
     fn test_get_hal_credentials_when_empty() {
-        let (_dir, vault) = setup_vault();
-        let result = get_hal_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        let result = get_hal_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(result, None);
     }
 
     #[test]
     fn test_save_hal_overwrites_existing() {
-        let (_dir, vault) = setup_vault();
-        save_hal_creds_inner(&vault, "prod", "alice".into(), "pw1".into()).unwrap();
-        save_hal_creds_inner(&vault, "prod", "bob".into(), "pw2".into()).unwrap();
-        let result = get_hal_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "prod", "alice".into(), "pw1".into()).unwrap();
+        save_hal_creds_inner(vault.as_ref(), "prod", "bob".into(), "pw2".into()).unwrap();
+        let result = get_hal_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(
             result,
             Some(HalCredentialInfo {
@@ -295,9 +267,9 @@ mod tests {
 
     #[test]
     fn test_save_and_get_datacite_credentials() {
-        let (_dir, vault) = setup_vault();
-        save_datacite_creds_inner(&vault, "prod", "10.17616/R3".into(), "pw".into()).unwrap();
-        let result = get_datacite_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        save_datacite_creds_inner(vault.as_ref(), "prod", "10.17616/R3".into(), "pw".into()).unwrap();
+        let result = get_datacite_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(
             result,
             Some(DataciteCredentialInfo {
@@ -308,79 +280,74 @@ mod tests {
 
     #[test]
     fn test_get_datacite_credentials_when_empty() {
-        let (_dir, vault) = setup_vault();
-        let result = get_datacite_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        let result = get_datacite_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(result, None);
     }
 
     #[test]
     fn test_delete_hal_credentials() {
-        let (_dir, vault) = setup_vault();
-        save_hal_creds_inner(&vault, "prod", "alice".into(), "secret".into()).unwrap();
-        delete_creds_inner(&vault, "hal", "prod").unwrap();
-        let result = get_hal_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "prod", "alice".into(), "secret".into()).unwrap();
+        delete_creds_inner(vault.as_ref(), "hal", "prod").unwrap();
+        let result = get_hal_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(result, None);
     }
 
     #[test]
     fn test_delete_datacite_credentials() {
-        let (_dir, vault) = setup_vault();
-        save_datacite_creds_inner(&vault, "prod", "10.17616/R3".into(), "pw".into()).unwrap();
-        delete_creds_inner(&vault, "datacite", "prod").unwrap();
-        let result = get_datacite_creds_inner(&vault, "prod").unwrap();
+        let vault = setup_vault();
+        save_datacite_creds_inner(vault.as_ref(), "prod", "10.17616/R3".into(), "pw".into()).unwrap();
+        delete_creds_inner(vault.as_ref(), "datacite", "prod").unwrap();
+        let result = get_datacite_creds_inner(vault.as_ref(), "prod").unwrap();
         assert_eq!(result, None);
     }
 
     #[test]
     fn test_delete_unknown_api_returns_error() {
-        let (_dir, vault) = setup_vault();
-        let err = delete_creds_inner(&vault, "unknown", "prod").unwrap_err();
+        let vault = setup_vault();
+        let err = delete_creds_inner(vault.as_ref(), "unknown", "prod").unwrap_err();
         assert!(err.contains("unknown api: unknown"));
     }
 
     #[test]
     fn test_unknown_env_returns_error() {
-        let (_dir, vault) = setup_vault();
-        let err = save_hal_creds_inner(&vault, "staging", "alice".into(), "pw".into()).unwrap_err();
+        let vault = setup_vault();
+        let err = save_hal_creds_inner(vault.as_ref(), "staging", "alice".into(), "pw".into()).unwrap_err();
         assert!(err.contains("unknown env: staging"));
     }
 
+    /// The OS-level persistence guarantee of each real backend (Windows Credential
+    /// Manager, the Secret Service) can't be exercised by a unit test, since the mock
+    /// store is memory-only. This instead checks that reads never rely on caching: every
+    /// call builds a fresh `Entry` from the shared store, so a value saved through one
+    /// entry must be visible through another.
     #[test]
-    fn test_persistence_across_restarts() {
-        let dir = TempDir::new().unwrap();
-        let path = dir.path().join("test.hold");
-        let key = vec![0u8; 32];
-
-        // Session 1 : sauvegarder
-        {
-            let vault = Stronghold::new(&path, key.clone()).unwrap();
-            vault.create_client(CLIENT_NAME).unwrap();
-            vault.save().unwrap();
-            save_hal_creds_inner(&vault, "prod", "alice".into(), "secret".into()).unwrap();
-        }
-
-        // Session 2 : charger depuis le fichier
-        {
-            let vault = Stronghold::new(&path, key.clone()).unwrap();
-            vault.load_client(CLIENT_NAME).unwrap();
-            let result = get_hal_creds_inner(&vault, "prod").unwrap();
-            assert_eq!(result, Some(HalCredentialInfo { login: "alice".into() }));
-        }
+    fn test_read_does_not_depend_on_entry_caching() {
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "prod", "alice".into(), "secret".into()).unwrap();
+        let result = get_hal_creds_inner(vault.as_ref(), "prod").unwrap();
+        assert_eq!(
+            result,
+            Some(HalCredentialInfo {
+                login: "alice".into()
+            })
+        );
     }
 
     #[test]
     fn test_prod_and_test_envs_are_independent() {
-        let (_dir, vault) = setup_vault();
-        save_hal_creds_inner(&vault, "prod", "alice".into(), "pw".into()).unwrap();
-        save_hal_creds_inner(&vault, "test", "bob".into(), "pw".into()).unwrap();
+        let vault = setup_vault();
+        save_hal_creds_inner(vault.as_ref(), "prod", "alice".into(), "pw".into()).unwrap();
+        save_hal_creds_inner(vault.as_ref(), "test", "bob".into(), "pw".into()).unwrap();
         assert_eq!(
-            get_hal_creds_inner(&vault, "prod").unwrap(),
+            get_hal_creds_inner(vault.as_ref(), "prod").unwrap(),
             Some(HalCredentialInfo {
                 login: "alice".into()
             })
         );
         assert_eq!(
-            get_hal_creds_inner(&vault, "test").unwrap(),
+            get_hal_creds_inner(vault.as_ref(), "test").unwrap(),
             Some(HalCredentialInfo {
                 login: "bob".into()
             })
